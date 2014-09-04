@@ -18,6 +18,7 @@ ls(m1proj)
 ls(m1proj$nimbleFunctions) ## the "x_*" and "mu_*" are from the model.  the "nfRefClass_*" are from the mcmc.
 ls(m1proj$nfCompInfos) ## these are the comilation information objects
 class(m1proj$nfCompInfos[['mu_L2_UID5']]$nfProc)
+ls(m1proj$nfCompInfos[['mu_L2_UID5']])
 m1proj$nfCompInfos[['mu_L2_UID5']]$nfProc$newSetupCode
 m1proj$nfCompInfos[['mu_L2_UID5']]$nfProc$newSetupCodeOneExpr
 
