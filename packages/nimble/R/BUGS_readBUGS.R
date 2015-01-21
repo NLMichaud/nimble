@@ -159,6 +159,13 @@ mergeMultiLineStatements <- function(text) {
     return(text)
 }
 
+processNonParseableCode <- function(text) {
+    # transforms unparseable code to parseable code
+    # at the moment this only deals with T() and I() syntax,
+    # transforming to T(<distribution>,<lower>,<upper>)
+    text <- gsub("([^~]*)*~(.*?)\\)\\s*[TI]\\s*\\((.*)", "\\1~ T(\\2\\), \\3", text)
+    return(text)
+}
 
 #' Create a NIMBLE BUGS model from a variety of input formats, including BUGS model files
 #' 
@@ -224,19 +231,11 @@ readBUGSmodel <- function(model, data = NULL, inits = NULL, dir = NULL, useInits
         modelText <- mergeMultiLineStatements(modelFileOutput$modelLines)
     }
     
-    processNonParseableCode <- function(text) {
-        text <- gsub("([^~])*~(.*?)\\)\s*[TI]\s*\\((.*)", "\\1~T(\\2\\, \\3", text)
-        return(text)
-    }
 
-  # here take unparsed result of mergeMultLine and deal with T(),I(); at this point entire statements should be on single lines
+    # deal with T() and I() unparseable syntax
     modelText <- processNonParseableCode(modelText)
-  # needto worry about inptus like:
-  # a <- 5 +
-  # 7
-  # as mergeMulti doesn't deal with this except for the parse part of the line
-#  gsub("~(.*?)\\)\w+T\w+\\((.*#)", "~T(\\1),\\2")
     model <- parse(text = modelText)[[1]]
+    # note that split lines that are parseable are dealt with by parse()
 
     
     if(! class(model) == "{")
