@@ -4,11 +4,11 @@
 BUGSmodel <- function(code, name, constants=list(), dimensions=list(), data=list(), inits=list(), returnModel=FALSE, where=globalenv(), debug=FALSE) {
     if(missing(name)) name <- deparse(substitute(code))
     if(length(constants) && sum(names(constants) == ""))
-      stop("BUGSmodel: 'constants' must be a named list")
+        stop("BUGSmodel: 'constants' must be a named list")
     if(length(dimensions) && sum(names(dimensions) == ""))
-      stop("BUGSmodel: 'dimensions' must be a named list")
+        stop("BUGSmodel: 'dimensions' must be a named list")
     if(length(data) && sum(names(data) == ""))
-      stop("BUGSmodel: 'data' must be a named list")
+        stop("BUGSmodel: 'data' must be a named list")
     md <- modelDefClass$new(name = name)
     md$setupModel(code=code, constants=constants, dimensions=dimensions, debug=debug)
     if(!returnModel) return(md)
@@ -60,8 +60,8 @@ nimbleModel <- function(code, name, constants=list(), dimensions=list(), data=li
 #'     mu ~ dnorm(0, sd = prior_sd)
 #' })
 nimbleCode <- function(code) {
-  code <- substitute(code)
-  return(code)
+    code <- substitute(code)
+    return(code)
 }
 
 
@@ -72,91 +72,91 @@ processVarBlock <- function(lines) {
   # at this point, sizes may have unevaluated variables in them
 
   # helper functions
-  getDim <- function(vec) {
-    if(length(vec) > 1)
-      return(length(strsplit(vec[2], ";")[[1]])) else return(0)
-  }
-  
-  getSize <- function(vec) {
-    if(length(vec) > 1)
-      return(strsplit(vec[2], ";"))  else return("0")
-  }
-
-  lines <- gsub("#.*", "", lines)
-  lines <- gsub(";", "", lines)
-  lines <- gsub("[[:space:]]", "", lines)
-  lines <- paste(lines, collapse = "")
-  # replace commas in brackets so can split variables
-  chars <- strsplit(lines, integer(0))[[1]]
-  nch <- length(chars)
-  inBrackets <- FALSE
-  for(i in seq_len(nch)) {
-    if(inBrackets && chars[i] == ",")
-      chars[i] = ";"
-    if(chars[i] == "[") inBrackets <- TRUE
-    if(chars[i] == "]") inBrackets <- FALSE
-  }
-  lines <- paste(chars, collapse = "")
-  lines <- gsub("\\]", "", lines)
-  
-  pieces <- unlist(strsplit(lines, ","))
-  pieces <- strsplit(pieces, "\\[")
-  # variable names are in front of '[' (if there is an '[')
-  varNames <- sapply(pieces, "[[", 1)
-  dim <- sapply(pieces, getDim)
-  size <- sapply(pieces, getSize)
-  names(dim) <- varNames
-  names(size) <- varNames
-  return(list(varNames = varNames, dim = dim, size = size))
+    getDim <- function(vec) {
+        if(length(vec) > 1)
+            return(length(strsplit(vec[2], ";")[[1]])) else return(0)
+    }
+    
+    getSize <- function(vec) {
+        if(length(vec) > 1)
+            return(strsplit(vec[2], ";"))  else return("0")
+    }
+    
+    lines <- gsub("#.*", "", lines)
+    lines <- gsub(";", "", lines)
+    lines <- gsub("[[:space:]]", "", lines)
+    lines <- paste(lines, collapse = "")
+    # replace commas in brackets so can split variables
+    chars <- strsplit(lines, integer(0))[[1]]
+    nch <- length(chars)
+    inBrackets <- FALSE
+    for(i in seq_len(nch)) {
+        if(inBrackets && chars[i] == ",")
+            chars[i] = ";"
+        if(chars[i] == "[") inBrackets <- TRUE
+        if(chars[i] == "]") inBrackets <- FALSE
+    }
+    lines <- paste(chars, collapse = "")
+    lines <- gsub("\\]", "", lines)
+    
+    pieces <- unlist(strsplit(lines, ","))
+    pieces <- strsplit(pieces, "\\[")
+    # variable names are in front of '[' (if there is an '[')
+    varNames <- sapply(pieces, "[[", 1)
+    dim <- sapply(pieces, getDim)
+    size <- sapply(pieces, getSize)
+    names(dim) <- varNames
+    names(size) <- varNames
+    return(list(varNames = varNames, dim = dim, size = size))
 }
 
 processModelFile <- function(fileName) {
-  # processes a BUGS model file (.bug), splitting into var, data, and code blocks
+    # processes a BUGS model file (.bug), splitting into var, data, and code blocks
   
-  codeLines <- readLines(fileName)
-  # extract lines corresponding to var, data, code blocks
-  # var used for dimension info and data lines sourced in environment of the data input file objects
-  codeLines <- paste(codeLines, collapse = "\n")
-  codeLines <- gsub("/\\*.*?\\*/", "", codeLines)  # remove C-style comment blocks
-  codeLines <- gsub("#.*?\n", "\n", codeLines) # remove R-style comments
-  codeLines <- paste("\n", codeLines, collapse = "") # make sure first block occurs after a \n so regex below works ok; this allows me to not mistakenly find 'var', 'data', etc as names of nodes
-  varBlockRegEx = "\n\\s*var\\s*(\n*.*?)(\n+\\s*(data|model|const).*)"
-  dataBlockRegEx = "\n\\s*data\\s*\\{(.*?)\\}(\n+\\s*(var|model|const).*)"
-  modelBlockRegEx = "\n\\s*model\\s*\\{(.*?)\\}\\s*\n+\\s*(var|data|const).*"
-
-  if(length(grep(varBlockRegEx, codeLines))) {
-    varLines <- gsub(varBlockRegEx, "\\1", codeLines)
-    codeLines <- gsub(varBlockRegEx, "\\2", codeLines)
-  } else varLines = NULL
-  if(length(grep(dataBlockRegEx, codeLines))) {
-    dataLines <- gsub(dataBlockRegEx, "\\1", codeLines)
-    codeLines <- gsub(dataBlockRegEx, "\\2", codeLines)
-  } else dataLines = NULL
-  if(!length(grep(modelBlockRegEx, codeLines))) # model block is last block
-    modelBlockRegEx = "model\\s*\\{(.*?)\\}\\s*\n*\\s*$"
-  modelLines <- gsub(modelBlockRegEx, "\\1", codeLines)  # removes 'model' and whitespace at begin/end
-  modelLines <- paste("{\n", modelLines, "\n}\n", collapse = "")
-
-  return(list(modelLines = modelLines, varLines = varLines, dataLines = dataLines))
+    codeLines <- readLines(fileName)
+    # extract lines corresponding to var, data, code blocks
+    # var used for dimension info and data lines sourced in environment of the data input file objects
+    codeLines <- paste(codeLines, collapse = "\n")
+    codeLines <- gsub("/\\*.*?\\*/", "", codeLines)  # remove C-style comment blocks
+    codeLines <- gsub("#.*?\n", "\n", codeLines) # remove R-style comments
+    codeLines <- paste("\n", codeLines, collapse = "") # make sure first block occurs after a \n so regex below works ok; this allows me to not mistakenly find 'var', 'data', etc as names of nodes
+    varBlockRegEx = "\n\\s*var\\s*(\n*.*?)(\n+\\s*(data|model|const).*)"
+    dataBlockRegEx = "\n\\s*data\\s*\\{(.*?)\\}(\n+\\s*(var|model|const).*)"
+    modelBlockRegEx = "\n\\s*model\\s*\\{(.*?)\\}\\s*\n+\\s*(var|data|const).*"
+    
+    if(length(grep(varBlockRegEx, codeLines))) {
+        varLines <- gsub(varBlockRegEx, "\\1", codeLines)
+        codeLines <- gsub(varBlockRegEx, "\\2", codeLines)
+    } else varLines = NULL
+    if(length(grep(dataBlockRegEx, codeLines))) {
+        dataLines <- gsub(dataBlockRegEx, "\\1", codeLines)
+        codeLines <- gsub(dataBlockRegEx, "\\2", codeLines)
+    } else dataLines = NULL
+    if(!length(grep(modelBlockRegEx, codeLines))) # model block is last block
+        modelBlockRegEx = "model\\s*\\{(.*?)\\}\\s*\n*\\s*$"
+    modelLines <- gsub(modelBlockRegEx, "\\1", codeLines)  # removes 'model' and whitespace at begin/end
+    modelLines <- paste("{\n", modelLines, "\n}\n", collapse = "")
+    
+    return(list(modelLines = modelLines, varLines = varLines, dataLines = dataLines))
 }
 
 
-mergeMultiLineStatementsAndParse <- function(text) {
-  # deals with BUGS syntax that allows multi-line statements where first line appears
-  # to be valid full statement (e.g., where '+' starts the 2nd line)
-  text <- unlist( strsplit(text, "\n") )  
-  firstNonWhiteSpaceIndex <- regexpr("[^[:blank:]]", text)
-  firstNonWhiteSpaceChar <- substr(text, firstNonWhiteSpaceIndex, firstNonWhiteSpaceIndex)
-  mergeUpward <- firstNonWhiteSpaceChar %in% c('+', '-', '*', '/')
-  if(length(text) > 1) {
-    for(i in seq.int(length(text), 2, by = -1)) {
-      if(mergeUpward[i]) {
-        text[i-1] <- paste(text[i-1], substring(text[i], firstNonWhiteSpaceIndex[i]) )
-      }
+mergeMultiLineStatements <- function(text) {
+    # deals with BUGS syntax that allows multi-line statements where first line appears
+    # to be valid full statement (e.g., where '+' starts the 2nd line)
+    text <- unlist( strsplit(text, "\n") )  
+    firstNonWhiteSpaceIndex <- regexpr("[^[:blank:]]", text)
+    firstNonWhiteSpaceChar <- substr(text, firstNonWhiteSpaceIndex, firstNonWhiteSpaceIndex)
+    mergeUpward <- firstNonWhiteSpaceChar %in% c('+', '-', '*', '/')
+    if(length(text) > 1) {
+        for(i in seq.int(length(text), 2, by = -1)) {
+            if(mergeUpward[i]) {
+                text[i-1] <- paste(text[i-1], substring(text[i], firstNonWhiteSpaceIndex[i]) )
+            }
+        }
     }
-  }
-  text <- text[!mergeUpward]
-  return(parse(text = text)[[1]])
+    text <- text[!mergeUpward]
+    return(text)
 }
 
 
@@ -184,183 +184,199 @@ mergeMultiLineStatementsAndParse <- function(text) {
 #' Rmodel[['mu']]
 #' Rmodel$nodes[['x']]$calculate()
 readBUGSmodel <- function(model, data = NULL, inits = NULL, dir = NULL, useInits = TRUE, useData = TRUE, debug = FALSE) {
-
-  # helper function
-  doEval <- function(vec, env) {
-    out <- rep(0, length(vec))
-    if(vec[1] == "0") return(numeric(0))
-    for(i in seq_along(vec))
-      out[i] <- eval(parse(text = vec[i]), env)
-    return(out)
-  }
-
-  dimOrLengthAlt <- function(x) {
-  # returns sizes of vectors/matrices/arrays with difference from dimOrLength that the value for a scalar is 1
-    tmp <- dimOrLength(x)
-    if(!length(tmp)) tmp <- 1
-    return(tmp)
-  }
-
-
-  # process model information
-
-  modelFileOutput <- modelName <- NULL
-  if(is.function(model)) model <- mergeMultiLineStatementsAndParse(deparse(body(model)))
-  if(is.character(model)) {
-    if(!is.null(dir) && dir == "") modelFile <- model else modelFile <- file.path(dir, model)  # check for "" avoids having "/model.bug" when user provides ""
-    modelName <- gsub("\\..*", "", basename(model))
-    if(!file.exists(modelFile)) {
-      possibleNames <- c(paste0(modelFile, '.bug'), paste0(modelFile, '.txt'))
-      fileExistence <- file.exists(possibleNames)
-      if(!sum(fileExistence)) {
-        stop("readBUGSmodel: 'model' input does not reference an existing file.")
-      } else {
-        if(sum(fileExistence) > 1)
-          warning("readBUGSmodel: multiple possible model files; using .bug file.")
-        modelFile <- possibleNames[which(fileExistence)[1]]
-      }
-    }
-    modelFileOutput <- processModelFile(modelFile)
-    model <- mergeMultiLineStatementsAndParse(modelFileOutput$modelLines)
-  }
-  if(! class(model) == "{")
-    stop("readBUGSmodel: cannot process 'model' input.")
     
-  # process initial values
-
-  if(useInits) {
-    initsFile <-  NULL
-    if(is.character(inits)) {
-      initsFile <- file.path(dir, inits)
-      if(!file.exists(initsFile)) 
-        stop("readBUGSmodel: 'inits' input does not reference an existing file.")
+    # helper function
+    doEval <- function(vec, env) {
+        out <- rep(0, length(vec))
+        if(vec[1] == "0") return(numeric(0))
+        for(i in seq_along(vec))
+            out[i] <- eval(parse(text = vec[i]), env)
+        return(out)
     }
-    if(is.null(inits)) {
-      possibleNames <- c(
-                         file.path(dir, paste0(modelName, "-init.R")),
-                         file.path(dir, paste0(modelName, "-inits.R")),
-                         file.path(dir, paste0(modelName, "-init.txt")),
-                         file.path(dir, paste0(modelName, "-inits.txt")),
-                         file.path(dir, paste0(modelName, "-init")),
-                         file.path(dir, paste0(modelName, "-inits")))
-      if(!Sys.info()['sysname'] %in% c("Darwin", "Windows")) # UNIX-like is case-sensitive
-        possibleNames <- c(possibleNames,
-                           file.path(dir, paste0(modelName, "-init.r")),
-                           file.path(dir, paste0(modelName, "-inits.r")))
-      fileExistence <- file.exists(possibleNames)
-      if(sum(fileExistence) > 1)
-        stop("readBUGSmodel: multiple possible initial value files; please pass as explicit 'inits' argument.")
-      if(sum(fileExistence))
-        initsFile <- possibleNames[which(fileExistence)[1]]
+    
+    dimOrLengthAlt <- function(x) {
+    # returns sizes of vectors/matrices/arrays with difference from dimOrLength that the value for a scalar is 1
+        tmp <- dimOrLength(x)
+        if(!length(tmp)) tmp <- 1
+        return(tmp)
     }
-    if(!is.null(initsFile)) {
-      inits <- new.env()
-      source(initsFile, inits)
-      inits <- as.list(inits)
+
+
+    # process model information
+
+    modelFileOutput <- modelName <- NULL
+    if(is.function(model)) modelText <- mergeMultiLineStatements(deparse(body(model)))
+    if(is.character(model)) {
+        if(!is.null(dir) && dir == "") modelFile <- model else modelFile <- file.path(dir, model)  # check for "" avoids having "/model.bug" when user provides ""
+        modelName <- gsub("\\..*", "", basename(model))
+        if(!file.exists(modelFile)) {
+            possibleNames <- c(paste0(modelFile, '.bug'), paste0(modelFile, '.txt'))
+            fileExistence <- file.exists(possibleNames)
+            if(!sum(fileExistence)) {
+                stop("readBUGSmodel: 'model' input does not reference an existing file.")
+            } else {
+                if(sum(fileExistence) > 1)
+                    warning("readBUGSmodel: multiple possible model files; using .bug file.")
+                modelFile <- possibleNames[which(fileExistence)[1]]
+            }
+        }
+        modelFileOutput <- processModelFile(modelFile)
+        modelText <- mergeMultiLineStatements(modelFileOutput$modelLines)
     }
-  } else {
-    inits <- NULL
-  }
-  if(!(is.null(inits) || is.list(inits)))
-    stop("readBUGSmodel: invalid input for 'inits'.")
+    
+    processNonParseableCode <- function(text) {
+        text <- gsub("([^~])*~(.*?)\\)\s*[TI]\s*\\((.*)", "\\1~T(\\2\\, \\3", text)
+        return(text)
+    }
 
-  # process var info
-  varInfo <- NULL
-  if(!is.null(modelFileOutput) && !is.null(modelFileOutput$varLines))
-    varInfo = processVarBlock(strsplit(modelFileOutput$varLines, "\n")[[1]])
+  # here take unparsed result of mergeMultLine and deal with T(),I(); at this point entire statements should be on single lines
+    modelText <- processNonParseableCode(modelText)
+  # needto worry about inptus like:
+  # a <- 5 +
+  # 7
+  # as mergeMulti doesn't deal with this except for the parse part of the line
+#  gsub("~(.*?)\\)\w+T\w+\\((.*#)", "~T(\\1),\\2")
+    model <- parse(text = modelText)[[1]]
 
-  # process data and constants input
-  # since data and constants are mixed together in JAGS and BUGS, we take the same approach here (unfortunately)
+    
+    if(! class(model) == "{")
+        stop("readBUGSmodel: cannot process 'model' input.")
+    
+    # process initial values
 
-  dataFile <-  NULL
-  if(is.character(data)) {
-    dataFile <- file.path(dir, data)
-    if(!file.exists(dataFile)) 
-      stop("readBUGSmodel: 'data' input does not reference an existing file.")
-  }
-  if(is.null(data)) {
-    possibleNames <- c(
-                       file.path(dir, paste0(modelName, "-data.R")),
-                       file.path(dir, paste0(modelName, "-data.txt")),
-                       file.path(dir, paste0(modelName, "-data")))
-    if(!Sys.info()['sysname'] %in% c("Darwin", "Windows")) # UNIX-like is case-sensitive
-      possibleNames <- c(possibleNames,
-                         file.path(dir, paste0(modelName, "-data.r")))
-    fileExistence <- file.exists(possibleNames)
-    if(sum(fileExistence) > 1)
-      stop("readBUGSmodel: multiple possible initial value files; please pass as explicit 'data' argument.")
-    if(sum(fileExistence))
-      dataFile <- possibleNames[which(fileExistence)[1]]
-  }
-  if(!is.null(dataFile)) {
-    data <- new.env()
-    source(dataFile, data)
-  }
-  if(is.list(data)) {
-    if(length(data) && sum(names(data) == ""))
-      stop("readBUGSmodel: 'data' must be a named list")
-    data <- list2env(data)  # need as environment for later use 
-  }
+    if(useInits) {
+        initsFile <-  NULL
+        if(is.character(inits)) {
+            initsFile <- file.path(dir, inits)
+            if(!file.exists(initsFile)) 
+                stop("readBUGSmodel: 'inits' input does not reference an existing file.")
+        }
+        if(is.null(inits)) {
+            possibleNames <- c(
+                file.path(dir, paste0(modelName, "-init.R")),
+                file.path(dir, paste0(modelName, "-inits.R")),
+                file.path(dir, paste0(modelName, "-init.txt")),
+                file.path(dir, paste0(modelName, "-inits.txt")),
+                file.path(dir, paste0(modelName, "-init")),
+                file.path(dir, paste0(modelName, "-inits")))
+            if(!Sys.info()['sysname'] %in% c("Darwin", "Windows")) # UNIX-like is case-sensitive
+                possibleNames <- c(possibleNames,
+                                   file.path(dir, paste0(modelName, "-init.r")),
+                                   file.path(dir, paste0(modelName, "-inits.r")))
+            fileExistence <- file.exists(possibleNames)
+            if(sum(fileExistence) > 1)
+                stop("readBUGSmodel: multiple possible initial value files; please pass as explicit 'inits' argument.")
+            if(sum(fileExistence))
+                initsFile <- possibleNames[which(fileExistence)[1]]
+        }
+        if(!is.null(initsFile)) {
+            inits <- new.env()
+            source(initsFile, inits)
+            inits <- as.list(inits)
+        }
+    } else {
+        inits <- NULL
+    }
+    if(!(is.null(inits) || is.list(inits)))
+        stop("readBUGSmodel: invalid input for 'inits'.")
+
+    #  process var info
+    varInfo <- NULL
+    if(!is.null(modelFileOutput) && !is.null(modelFileOutput$varLines))
+        varInfo = processVarBlock(strsplit(modelFileOutput$varLines, "\n")[[1]])
+    
+    # process data and constants input
+    # since data and constants are mixed together in JAGS and BUGS, we take the same approach here (unfortunately)
+
+    dataFile <-  NULL
+    if(is.character(data)) {
+        dataFile <- file.path(dir, data)
+        if(!file.exists(dataFile)) 
+            stop("readBUGSmodel: 'data' input does not reference an existing file.")
+    }
+    if(is.null(data)) {
+        possibleNames <- c(
+            file.path(dir, paste0(modelName, "-data.R")),
+            file.path(dir, paste0(modelName, "-data.txt")),
+            file.path(dir, paste0(modelName, "-data")))
+        if(!Sys.info()['sysname'] %in% c("Darwin", "Windows")) # UNIX-like is case-sensitive
+            possibleNames <- c(possibleNames,
+                               file.path(dir, paste0(modelName, "-data.r")))
+        fileExistence <- file.exists(possibleNames)
+        if(sum(fileExistence) > 1)
+            stop("readBUGSmodel: multiple possible initial value files; please pass as explicit 'data' argument.")
+        if(sum(fileExistence))
+            dataFile <- possibleNames[which(fileExistence)[1]]
+    }
+    if(!is.null(dataFile)) {
+        data <- new.env()
+        source(dataFile, data)
+    }
+    if(is.list(data)) {
+        if(length(data) && sum(names(data) == ""))
+            stop("readBUGSmodel: 'data' must be a named list")
+        data <- list2env(data)  # need as environment for later use 
+    }
+    
+    if(!(is.null(data) || is.environment(data)))
+        stop("readBUGSmodel: invalid input for 'data'.")
+    
+    if(!is.null(modelFileOutput) && !is.null(modelFileOutput$dataLines)) {
+      # process data block in context of data objects
+        if(is.null(data))
+            data = new.env()
   
-  if(!(is.null(data) || is.environment(data)))
-    stop("readBUGSmodel: invalid input for 'data'.")
-
-  if(!is.null(modelFileOutput) && !is.null(modelFileOutput$dataLines)) {
-    # process data block in context of data objects
-    if(is.null(data))
-      data = new.env()
-  
-    # create vectors/matrices/arrays for all objects in var block in case data block tries to fill objects
-    vars <- varInfo$varNames[varInfo$dim > 0]
-    vars <- vars[!(vars %in% ls(data))]
-    for(thisVar in vars) {
-      dimInfo <- sapply(varInfo$size[[thisVar]], function(x) eval(parse(text = x), envir = data))
-      tmp <- 0
-      length(tmp) <- prod(dimInfo)
-      dim(tmp) <- dimInfo
-      assign(thisVar, tmp, envir = data)
+      # create vectors/matrices/arrays for all objects in var block in case data block tries to fill objects
+        vars <- varInfo$varNames[varInfo$dim > 0]
+        vars <- vars[!(vars %in% ls(data))]
+        for(thisVar in vars) {
+            dimInfo <- sapply(varInfo$size[[thisVar]], function(x) eval(parse(text = x), envir = data))
+            tmp <- 0
+            length(tmp) <- prod(dimInfo)
+            dim(tmp) <- dimInfo
+            assign(thisVar, tmp, envir = data)
+        }
+        
+        origVars <- ls(data)
+        eval(parse(text = modelFileOutput$dataLines), envir = data)
+        newVars <- nf_assignmentLHSvars(parse(text = modelFileOutput$dataLines)[[1]])
+        data <- as.list(data)[c(origVars, newVars)]
+    } else {
+        data <- as.list(data)
     }
 
-    origVars <- ls(data)
-    eval(parse(text = modelFileOutput$dataLines), envir = data)
-    newVars <- nf_assignmentLHSvars(parse(text = modelFileOutput$dataLines)[[1]])
-    data <- as.list(data)[c(origVars, newVars)]
-  } else {
-    data <- as.list(data)
-  }
-
-  # determine dimensions from data list and varInfo
-  dims <- lapply(data, dimOrLength)
-  if(!is.null(varInfo)) {
-    env <- data
-    sizeInfo <- lapply(varInfo$size, doEval, env)
-    # by default, use sizes based on actual data objects and ignore info
-    # in the var block if it conflicts
-    newNames <- names(sizeInfo)[!(names(sizeInfo) %in% names(data))]
-    dims[newNames] <- sizeInfo[newNames]
-  }
-
-  if(length(dims) && sum(names(dims) == ""))
-    stop("readBUGSmodel: something is wrong; 'dims' object is not a named list")
-
-  # create R model
-  # 'data' will have constants and data, but BUGSmodel is written to be ok with this
-  # we can't separate them before building model as we don't know names of nodes in model
-  Rmodel <- nimbleModel(model, ifelse(is.null(modelName), 'model', modelName), constants = data, dimensions = dims, debug = debug)
-
-  # now provide values for data nodes from 'data' list
-  dataNodes <- names(data)[(names(data) %in% Rmodel$getVarNames())]
-  data <- data[dataNodes]
-  names(data) <- dataNodes
-  Rmodel$setData(data)
-
-  if(!is.null(inits)) {
-    varNames <- names(inits)[names(inits) %in% Rmodel$getVarNames()]
-    for(varName in varNames) {
-      # check for isData in case a node is a mix of data and non-data and inits are supplied such
-      # that they would overwrite the data nodes without this check
-      Rmodel[[varName]][!Rmodel$isData(varName)] <- inits[[varName]][!Rmodel$isData(varName)] 
+    # determine dimensions from data list and varInfo
+    dims <- lapply(data, dimOrLength)
+    if(!is.null(varInfo)) {
+        env <- data
+        sizeInfo <- lapply(varInfo$size, doEval, env)
+        # by default, use sizes based on actual data objects and ignore info
+        # in the var block if it conflicts
+        newNames <- names(sizeInfo)[!(names(sizeInfo) %in% names(data))]
+        dims[newNames] <- sizeInfo[newNames]
     }
-  }
-  return(Rmodel)
+    
+    if(length(dims) && sum(names(dims) == ""))
+        stop("readBUGSmodel: something is wrong; 'dims' object is not a named list")
+    
+    # create R model
+    # 'data' will have constants and data, but BUGSmodel is written to be ok with this
+    # we can't separate them before building model as we don't know names of nodes in model
+    Rmodel <- nimbleModel(model, ifelse(is.null(modelName), 'model', modelName), constants = data, dimensions = dims, debug = debug)
+
+    # now provide values for data nodes from 'data' list
+    dataNodes <- names(data)[(names(data) %in% Rmodel$getVarNames())]
+    data <- data[dataNodes]
+    names(data) <- dataNodes
+    Rmodel$setData(data)
+    
+    if(!is.null(inits)) {
+        varNames <- names(inits)[names(inits) %in% Rmodel$getVarNames()]
+        for(varName in varNames) {
+        # check for isData in case a node is a mix of data and non-data and inits are supplied such
+        # that they would overwrite the data nodes without this check
+            Rmodel[[varName]][!Rmodel$isData(varName)] <- inits[[varName]][!Rmodel$isData(varName)] 
+        }
+    }
+    return(Rmodel)
 }
