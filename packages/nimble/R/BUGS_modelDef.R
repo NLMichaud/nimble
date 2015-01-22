@@ -78,10 +78,12 @@ modelDefClass <- setRefClass('modelDefClass',
                                  initializeContexts             = function() {},
                                  processBUGScode                = function() {},
                                  addMissingIndexing             = function() {},
+                                 removeTruncationWrapping       = function() {},
                                  expandDistributions            = function() {},
                                  processLinks                   = function() {},
                                  reparameterizeDists            = function() {},
                                  addRemainingDotParams          = function() {},
+                                 insertDistributionBounds       = function() {},
                                  replaceAllConstants            = function() {},
                                  liftExpressionArgs             = function() {},
                                  addIndexVarsToDeclInfo         = function() {},
@@ -98,7 +100,7 @@ modelDefClass <- setRefClass('modelDefClass',
                                  buildIgraph                    = function() {},
                                  genGraphNodesList              = function() {},
                           #       buildMaps                      = function() {},
-                                 buildMaps2						= function() {},
+                                buildMaps2						= function() {},
                                  
                                  newModel   = function() {},
                                  printDI    = function() {},
@@ -130,10 +132,12 @@ modelDefClass$methods(setupModel = function(code, constants, dimensions, debug) 
     initializeContexts()              ## initializes the field: contexts
     processBUGScode()                 ## uses BUGScode, sets fields: contexts, declInfo$code, declInfo$contextID
     addMissingIndexing()              ## overwrites declInfo, using dimensionsList, fills in any missing indexing
+    removeTruncationWrapping()        ## transforms T(ddist(),lower,upper) to put bounds into declInfo
     expandDistributions()             ## overwrites declInfo for stochastic nodes: calls match.call() on RHS      (uses distributions$matchCallEnv)
     processLinks()                    ## overwrites declInfo (*and adds*) for nodes with link functions           (uses linkInverses)
     reparameterizeDists()             ## overwrites declInfo when distribution reparameterization is needed       (uses distributions), keeps track of orig parameter in .paramName
     addRemainingDotParams()           ## overwrites declInfo, adds any additional .paramNames which aren't there  (uses distributions)
+    insertDistributionBounds()        # put lower and upper into code expression
     replaceAllConstants()             ## overwrites declInfo with constants replaced; only replaces scalar constants
     liftExpressionArgs()              ## overwrites declInfo (*and adds*), lifts expressions in distribution arguments to new nodes.  does NOT lift '.param' names
     addIndexVarsToDeclInfo()          ## sets field declInfo[[i]]$indexVariableExprs from contexts.  must be after overwrites of declInfo
@@ -187,7 +191,7 @@ modelDefClass$methods(assignDimensions = function(dimensions) {
     dL <- dimensions
     
     # add dimensions of any *non-scalar* constants to dimensionsList
-    # we'll try to be smart about this: check for duplicate names in constants and dimensions, and make sure they agree
+    # we'll try to be smart about this: check for duplicate names in constants and dimensions,and make sure they agree
     for(i in seq_along(constantsList)) {
         constName <- names(constantsList)[i]
         ## constDim <- if(is.null(dim(constantsList[[i]]))) length(constantsList[[i]]) else dim(constantsList[[i]])
@@ -325,6 +329,28 @@ example_getMissingDimensions <- function(code) {
     }
     return(cCall)
 }
+
+modelDefClass$methods(removeTruncationWrapping = function() {
+    ## pulls bounds out of T() syntax and puts in lower and upper fields
+    for(i in seq_along(declInfo)) {
+        
+        BUGSdecl <- declInfo[[i]]
+        if(BUGSdecl$type != 'stoch') next
+
+        if(BUGSdecl$valueExpr[[1]] != "T") {
+            BUGSdecl$truncation <- NULL
+        } else {
+            BUGSdecl$truncation <- list(
+                lower = if(BUGSdecl$valueExpr[[3]] == "") -Inf else BUGSdecl$valueExpr[[3]],
+                upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]])
+            BUGSdecl$valueExpr <- BUGSdecl$valueExpr[[2]]
+        }
+            
+        declInfo[[i]] <<- BUGSdecl
+    }
+})
+
+
 modelDefClass$methods(expandDistributions = function() {
     ## overwrites declInfo for stochastic nodes: calls match.call() on RHS (uses distributions$matchCallEnv)
     for(i in seq_along(declInfo)) {
@@ -336,7 +362,7 @@ modelDefClass$methods(expandDistributions = function() {
         newCode[[3]] <- eval(BUGSdecl$valueExpr, distributions$matchCallEnv)
         
         BUGSdeclClassObject <- BUGSdeclClass$new()
-        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber)
+        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
         declInfo[[i]] <<- BUGSdeclClassObject
     }
 })
@@ -359,11 +385,11 @@ modelDefClass$methods(processLinks = function() {
             newCode <- substitute(A <- B, list(A = BUGSdecl$targetNodeExpr, B = newRHS))
             
             BUGSdeclClassObject <- BUGSdeclClass$new()
-            BUGSdeclClassObject$setup(code, BUGSdecl$contextID, BUGSdecl$sourceLineNumber)
+            BUGSdeclClassObject$setup(code, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
             newDeclInfo[[nextNewDeclInfoIndex]]     <- BUGSdeclClassObject
             
             BUGSdeclClassObject <- BUGSdeclClass$new()
-            BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber)
+            BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
             newDeclInfo[[nextNewDeclInfoIndex + 1]] <- BUGSdeclClassObject
             
         } else {    # deterministic node
@@ -433,7 +459,7 @@ modelDefClass$methods(reparameterizeDists = function() {
         newCode[[3]] <- newValueExpr
         
         BUGSdeclClassObject <- BUGSdeclClass$new()
-        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber)
+        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
         declInfo[[i]] <<- BUGSdeclClassObject
     }  # close loop over declInfo
 })
@@ -459,10 +485,28 @@ modelDefClass$methods(addRemainingDotParams = function() {
         newCode <- BUGSdecl$code
         newCode[[3]] <- newValueExpr
         BUGSdeclClassObject <- BUGSdeclClass$new()
-        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber)
+        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
         declInfo[[iDecl]] <<- BUGSdeclClassObject
     }
 })
+
+modelDefClass$methods(insertDistributionBounds = function() {
+    ## pulls bounds out of T() syntax and puts in lower and upper fields
+    for(i in seq_along(declInfo)) {
+        
+        BUGSdecl <- declInfo[[i]]
+        if(BUGSdecl$type != 'stoch' || is.null(BUGSdecl$truncation)) next
+
+        nParams <- length(BUGSdecl$valueExpr) 
+        BUGSdecl$valueExpr[[nParams + 1]] <- BUGSdecl$truncation$lower
+        BUGSdecl$valueExpr[[nParams + 2]] <- BUGSdecl$truncation$upper
+        names(BUGSdecl$valueExpr)[(nParams + 1):(nParams + 2)] <- c('lower', 'upper')
+        BUGSdecl$code[[3]] <- BUGSdecl$valueExpr
+        declInfo[[i]] <<- BUGSdecl
+    }
+})
+
+    
 modelDefClass$methods(replaceAllConstants = function() {
     ## overwrites declInfo with constants replaced; only replaces scalar constants
     ## does both LHS and RHS of each BUGSdecl code
