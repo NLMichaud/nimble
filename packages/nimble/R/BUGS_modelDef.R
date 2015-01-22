@@ -339,14 +339,19 @@ modelDefClass$methods(removeTruncationWrapping = function() {
 
         if(BUGSdecl$valueExpr[[1]] != "T") {
             BUGSdecl$truncation <- NULL
+            newCode <- BUGSdecl$code
         } else {
             BUGSdecl$truncation <- list(
                 lower = if(BUGSdecl$valueExpr[[3]] == "") -Inf else BUGSdecl$valueExpr[[3]],
                 upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]])
-            BUGSdecl$valueExpr <- BUGSdecl$valueExpr[[2]]
+
+            newCode <- BUGSdecl$code
+            newCode[[3]] <- BUGSdecl$valueExpr[[2]]  # insert the core density function call
         }
-            
-        declInfo[[i]] <<- BUGSdecl
+
+        BUGSdeclClassObject <- BUGSdeclClass$new()
+        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)          
+        declInfo[[i]] <<- BUGSdeclClassObject
     }
 })
 
@@ -497,12 +502,20 @@ modelDefClass$methods(insertDistributionBounds = function() {
         BUGSdecl <- declInfo[[i]]
         if(BUGSdecl$type != 'stoch' || is.null(BUGSdecl$truncation)) next
 
-        nParams <- length(BUGSdecl$valueExpr) 
-        BUGSdecl$valueExpr[[nParams + 1]] <- BUGSdecl$truncation$lower
-        BUGSdecl$valueExpr[[nParams + 2]] <- BUGSdecl$truncation$upper
-        names(BUGSdecl$valueExpr)[(nParams + 1):(nParams + 2)] <- c('lower', 'upper')
-        BUGSdecl$code[[3]] <- BUGSdecl$valueExpr
-        declInfo[[i]] <<- BUGSdecl
+        newValueExpr <- BUGSdecl$valueExpr   ## grab the RHS (distribution)
+
+        nParams <- length(newValueExpr) 
+        newValueExpr[[nParams + 1]] <- BUGSdecl$truncation$lower
+        newValueExpr[[nParams + 2]] <- BUGSdecl$truncation$upper
+        names(newValueExpr)[(nParams + 1):(nParams + 2)] <- c('lower', 'upper')
+
+        newCode <- BUGSdecl$code
+        newCode[[3]] <- newValueExpr
+
+        BUGSdeclClassObject <- BUGSdeclClass$new()
+        BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)
+
+        declInfo[[i]] <<- BUGSdeclClassObject
     }
 })
 
