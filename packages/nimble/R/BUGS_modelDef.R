@@ -335,19 +335,17 @@ modelDefClass$methods(removeTruncationWrapping = function() {
     for(i in seq_along(declInfo)) {
         
         BUGSdecl <- declInfo[[i]]
-        if(BUGSdecl$type != 'stoch') next
+        if(BUGSdecl$type != 'stoch' || BUGSdecl$valueExpr[[1]] != "T") next
 
-        if(BUGSdecl$valueExpr[[1]] != "T") {
+        BUGSdecl$truncation <- list(
+            lower = if(BUGSdecl$valueExpr[[3]] == "") -Inf else BUGSdecl$valueExpr[[3]],
+            upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]])
+        
+        newCode <- BUGSdecl$code
+        if(BUGSdecl$truncation$lower == -Inf && BUGSdecl$truncation$upper == Inf) {  # user specified no bounds so not really truncated
             BUGSdecl$truncation <- NULL
-            newCode <- BUGSdecl$code
-        } else {
-            BUGSdecl$truncation <- list(
-                lower = if(BUGSdecl$valueExpr[[3]] == "") -Inf else BUGSdecl$valueExpr[[3]],
-                upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]])
-
-            newCode <- BUGSdecl$code
-            newCode[[3]] <- BUGSdecl$valueExpr[[2]]  # insert the core density function call
         }
+        newCode[[3]] <- BUGSdecl$valueExpr[[2]]  # insert the core density function call
 
         BUGSdeclClassObject <- BUGSdeclClass$new()
         BUGSdeclClassObject$setup(newCode, BUGSdecl$contextID, BUGSdecl$sourceLineNumber, BUGSdecl$truncation)          
