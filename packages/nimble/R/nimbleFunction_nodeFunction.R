@@ -67,8 +67,10 @@ ndf_createMethodList <- function(LHS, RHS, altParams, logProbNodeExpr, type, set
             methodList[['get_value']] <- ndf_generateGetParamFunction(LHS, typeList$type, typeList$nDim)
             ## add accessor functions for stochastic node distribution parameters
             for(param in names(RHS[-1])) {
-                typeList <- distributions[[distName]]$types[[param]]
-                methodList[[paste0('get_',param)]] <- ndf_generateGetParamFunction(RHS[[param]], typeList$type, typeList$nDim)
+                if(!param %in% c("lower", "upper")) {
+                    typeList <- distributions[[distName]]$types[[param]]
+                    methodList[[paste0('get_',param)]] <- ndf_generateGetParamFunction(RHS[[param]], typeList$type, typeList$nDim)
+                }
             }
             for(i in seq_along(altParams)) {
                 altParamName <- names(altParams)[i]
@@ -88,6 +90,35 @@ ndf_createStochSimulate <- function(RHS) {
     RHS[[1]] <- as.name(distributions[[as.character(RHS[[1]])]]$simulateName)   # does the appropriate substituion of the distribution name
     if(length(RHS) > 1) {    for(i in (length(RHS)+1):3)   { RHS[i] <- RHS[i-1];     names(RHS)[i] <- names(RHS)[i-1] } }    # scoots all named arguments right 1 position
     RHS[[2]] <- 1;     names(RHS)[2] <- ''    # adds the first (unnamed) argument '1'
+    if("lower" %in% names(RHS) || "upper" %in% names(RHS))
+        RHS <- ndf_createStochSimulateTrunc(RHS)
+    return(RHS)
+}
+
+## changes 'rnorm(mean=1, sd=2, lower=0, upper=3)' into correct truncated simulation
+##   using inverse CDF
+ndf_createStochSimulateTrunc <- function(RHS) {
+    lowerPosn <- which("lower" == names(RHS))
+    upperPosn <- which("upper" == names(RHS))
+    lower <- RHS[[lowerPosn]]
+    upper <- RHS[[upperPosn]]
+    RHS <- RHS[-c(lowerPosn, upperPosn)]
+    dist <- substring(as.character(RHS[[1]]), 2, 1000)
+    # setup to do runif(1, pdist(lower,...), pdist(upper,...))
+    runifDev <- quote(runif(1, 0, 1))
+    template <- RHS
+    template[[1]] <- as.name(paste0("p", dist))
+    if(lower != -Inf) {
+        template[[2]] <- lower
+        runifDev[[3]] <- template
+    }
+    if(upper != Inf) {
+        template[[2]] <- upper
+        runifDev[[4]] <- template
+    }
+    # setup to do qdist(unif_deviate,...)
+    RHS[[1]] <- as.name(paste0("q", dist))
+    RHS[[2]] <- runifDev
     return(RHS)
 }
 
@@ -98,9 +129,46 @@ ndf_createStochCalculate <- function(LHS, RHS) {
     RHS[[2]] <- LHS;     names(RHS)[2] <- ''    # adds the first (unnamed) argument LHS
     newArgIndex <- length(RHS) + 1
     RHS[newArgIndex] <- 1;      names(RHS)[newArgIndex] <- 'log'      # adds the last argument log=TRUE # This was changed to 1 from TRUE for easier C++ generation
+    if("lower" %in% names(RHS) || "upper" %in% names(RHS))
+        RHS <- ndf_createStochCalculateTrunc(RHS)
     return(RHS)
 }
 
+## changes 'dnorm(mean=1, sd=2, lower=0, upper=3)' into correct truncated calculation
+ndf_createStochCalculateTrunc <- function(RHS) {
+    lowerPosn <- which("lower" == names(RHS))
+    upperPosn <- which("upper" == names(RHS))
+    lower <- RHS[[lowerPosn]]
+    upper <- RHS[[upperPosn]]
+    RHS <- RHS[-c(lowerPosn, upperPosn)]
+    dist <- substring(as.character(RHS[[1]]), 2, 1000)
+
+    ## set up template expressions so we can fill in pieces
+    template <- quote(a - b)
+    template[[2]] <- RHS  # first term is the original ddist(...)
+
+    pdistTemplate <- RHS
+    pdistTemplate[[1]] <- as.name(paste0("p", dist))
+
+    expTemplate <- quote(exp(a))
+    
+    denomTemplate <- quote(log(1 - 0))
+
+    if(lower != -Inf) {
+        pdistTemplate[[2]] <- lower
+        expTemplate[[2]] <- pdistTemplate
+        denomTemplate[[2]][[3]] <- expTemplate
+    }
+    if(upper != Inf) {
+        pdistTemplate[[2]] <- upper
+        expTemplate[[2]] <- pdistTemplate
+        denomTemplate[[2]][[2]] <- expTemplate
+    }
+
+    template[[3]] <- denomTemplate
+    return(template)
+}
+        
 ## creates the accessor method to return value 'expr'
 ndf_generateGetParamFunction <- function(expr, type, nDim) {
     ans <- try(eval(substitute(
