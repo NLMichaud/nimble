@@ -50,16 +50,18 @@ ndf_createMethodList <- function(LHS, RHS, altParams, logProbNodeExpr, type, set
                  RHS=RHS)))
     }
     if(type == 'stoch') {
+        print('here')
+        browser()
         methodList <- eval(substitute(
             list(
                 simulate   = function() { LHS     <<- STOCHSIM                                                        },
-                calculate  = function() { LOGPROB <<- STOCHCALC;   returnType(double());   return(invisible(LOGPROB)) },
+                calculate  = function() { STOCHCALC_FULLEXPR;   returnType(double());   return(invisible(LOGPROB)) },  ## used to be LOGPROB <<- STOCHCALC
                 getLogProb = function() {                          returnType(double());   return(LOGPROB)            }
             ),
             list(LHS       = LHS,
                  LOGPROB   = logProbNodeExpr,
                  STOCHSIM  = ndf_createStochSimulate(RHS),
-                 STOCHCALC = ndf_createStochCalculate(LHS, RHS))))
+                 STOCHCALC_FULLEXPR = ndf_createStochCalculate(logProbNodeExpr, LHS, RHS))))
         if(nimbleOptions$compileAltParamFunctions) {
             distName <- as.character(RHS[[1]])
             ## add accessor function for node value; used in multivariate conjugate sampler functions
@@ -123,19 +125,26 @@ ndf_createStochSimulateTrunc <- function(RHS) {
 }
 
 ## changes 'dnorm(mean=1, sd=2)' into 'dnorm(LHS, mean=1, sd=2, log=TRUE)'
-ndf_createStochCalculate <- function(LHS, RHS) {
+ndf_createStochCalculate <- function(logProbNodeExpr, LHS, RHS) {
+    browser()
     RHS[[1]] <- as.name(distributions[[as.character(RHS[[1]])]]$densityName)   # does the appropriate substituion of the distribution name
     if(length(RHS) > 1) {    for(i in (length(RHS)+1):3)   { RHS[i] <- RHS[i-1];     names(RHS)[i] <- names(RHS)[i-1] } }    # scoots all named arguments right 1 position
     RHS[[2]] <- LHS;     names(RHS)[2] <- ''    # adds the first (unnamed) argument LHS
     newArgIndex <- length(RHS) + 1
     RHS[newArgIndex] <- 1;      names(RHS)[newArgIndex] <- 'log'      # adds the last argument log=TRUE # This was changed to 1 from TRUE for easier C++ generation
-    if("lower" %in% names(RHS) || "upper" %in% names(RHS))
-        RHS <- ndf_createStochCalculateTrunc(RHS)
-    return(RHS)
+    if("lower" %in% names(RHS) || "upper" %in% names(RHS)) {
+        return(ndf_createStochCalculateTrunc(logProbNodeExpr, LHS, RHS))
+    } else {
+        TEMPLATE <- quote(LOGPROB <<- STOCHCALC)
+        TEMPLATE[[2]] <- logProbNodeExpr
+        TEMPLATE[[3]] <- RHS
+        return(TEMPLATE)
+    }
 }
 
 ## changes 'dnorm(mean=1, sd=2, lower=0, upper=3)' into correct truncated calculation
-ndf_createStochCalculateTrunc <- function(RHS) {
+ndf_createStochCalculateTrunc <- function(logProbNodeExpr, LHS, RHS) {
+    browser()
     lowerPosn <- which("lower" == names(RHS))
     upperPosn <- which("upper" == names(RHS))
     lower <- RHS[[lowerPosn]]
@@ -143,6 +152,8 @@ ndf_createStochCalculateTrunc <- function(RHS) {
     RHS <- RHS[-c(lowerPosn, upperPosn)]
     dist <- substring(as.character(RHS[[1]]), 2, 1000)
 
+    ifTemplate <- quote(if(lowerVal <= LHSval && LHSval <= upperVal) logProb_value <<- ok else logProb_value <<- -Inf)
+    
     ## set up template expressions so we can fill in pieces
     template <- quote(a - b)
     template[[2]] <- RHS  # first term is the original ddist(...)
@@ -166,7 +177,14 @@ ndf_createStochCalculateTrunc <- function(RHS) {
     }
 
     template[[3]] <- denomTemplate
-    return(template)
+
+    ifTemplate[[2]][[2]][[2]] <- lower
+    ifTemplate[[2]][[2]][[3]] <- ifTemplate[[2]][[3]][[2]] <- LHS
+    ifTemplate[[2]][[3]][[3]] <- upper
+    ifTemplate[[3]][[2]] <- ifTemplate[[4]][[2]] <- logProbNodeExpr
+    ifTemplate[[3]][[3]] <- template
+    
+    return(ifTemplate)
 }
         
 ## creates the accessor method to return value 'expr'
