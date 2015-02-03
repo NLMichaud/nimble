@@ -5,7 +5,7 @@
 # the second and subsequent strings in an element are any reparameterizations, with the density name as in R/NIMBLE and the canonical parameter names as used in R's math library (and NIMBLE extensions)
 # if R/NIMBLE uses the same parameterization (in the same order) and same density name, the element may simply be the BUGS density definition (e.g., dichisq())
 # if R/NIMBLE uses the same parameterization but in a different order, then one should define the reordering as a reparameterization (e.g., dbin())
-
+# pqAvail is TRUE when the cdf ('p') and inverse cdf ('q') functions exist (either in Rmath or because we've written them for NIMBLE [which we haven't done in any cases yet])
 
 
 distributionsInputList <- list(
@@ -18,11 +18,13 @@ distributionsInputList <- list(
     
     dbern   = list(BUGSdist = 'dbern(prob)',
                    Rdist    = 'dbinom(size = 1, prob)',
-                   discrete = TRUE),
+                   discrete = TRUE,
+                   pqAvail = TRUE),
     
     dbin    = list(BUGSdist = 'dbin(prob, size)',
                    Rdist    = 'dbinom(size, prob)',
-                   discrete = TRUE),
+                   discrete = TRUE,
+                   pqAvail = TRUE),
     
     dcat    = list(BUGSdist = 'dcat(prob)',
                    ##Rdist    = 'dcat(prob, K = length(prob))',
@@ -38,10 +40,12 @@ distributionsInputList <- list(
     
     dnegbin = list(BUGSdist = 'dnegbin(prob, size)',
                    Rdist    = 'dnbinom(size, prob)',
-                   discrete = TRUE),
+                   discrete = TRUE,
+                   pqAvail = TRUE),
     
     dpois   = list(BUGSdist = 'dpois(lambda)',
-                   discrete = TRUE),
+                   discrete = TRUE,
+                   pqAvail = TRUE),
     
     
     ##############################################
@@ -51,44 +55,54 @@ distributionsInputList <- list(
     
     dbeta   = list(BUGSdist = 'dbeta(shape1, shape2, mean, sd)',
                    Rdist    = 'dbeta(shape1 = mean^2*(1-mean)/sd^2-mean, shape2 = mean*(1-mean)^2/sd^2+mean-1)',
-                   altParams= c('mean = shape1/(shape1+shape2)', 'sd = sqrt(shape1*shape2/((shape1*shape2)^2*(shape1+shape2+1)))')),
+                   altParams= c('mean = shape1/(shape1+shape2)', 'sd = sqrt(shape1*shape2/((shape1*shape2)^2*(shape1+shape2+1)))'),
+                   pqAvail = TRUE),
     
-    dchisq  = list(BUGSdist = 'dchisq(df)'),
+    dchisq  = list(BUGSdist = 'dchisq(df)',
+                   pqAvail = TRUE),
     
     ## ddexp   = list('ddexp(location, scale, rate)'),   ## 'ddexp' function not implemented yet?  -DT
     
     dexp    = list(BUGSdist = 'dexp(rate, scale)',
                    Rdist    = 'dexp(rate = 1/scale)',
-                   altParams= 'scale = 1/rate'),
+                   altParams= 'scale = 1/rate',
+                   pqAvail = TRUE),
     
     dgamma  = list(BUGSdist = 'dgamma(shape, rate, scale, mean, sd)',
                    Rdist    = c('dgamma(shape, scale = 1/rate)', 'dgamma(shape = mean^2/sd^2, scale = sd^2/mean)'),
-                   altParams= 'rate = 1/scale'),
+                   altParams= 'rate = 1/scale',
+                   pqAvail = TRUE),
     
     ## gen.gamma = list(BUGSdist = 'gen.gamma(r, mu, beta)'),   ## not sure the state of this?  -DT
     
     dlnorm  = list(BUGSdist = 'dlnorm(meanlog, tau, sdlog)',
                    Rdist    = 'dlnorm(meanlog, sdlog = 1/sqrt(tau))',
-                   altParams= c('tau = sdlog^-2', 'var = sdlog^2')),
+                   altParams= c('tau = sdlog^-2', 'var = sdlog^2'),
+                   pqAvail = TRUE),
     
     dlogis  = list(BUGSdist = 'dlogis(location, rate, scale)',
-                   Rdist    = 'dlogis(location, scale = 1/rate)'),
+                   Rdist    = 'dlogis(location, scale = 1/rate)',
+                   pqAvail = TRUE),
     
     dnorm   = list(BUGSdist = 'dnorm(mean, tau, sd, var)',
                    Rdist    = c('dnorm(mean, sd = 1/sqrt(tau))', 'dnorm(mean, sd = sqrt(var))'),
-                   altParams= c('tau = sd^-2', 'var = sd^2')),
+                   altParams= c('tau = sd^-2', 'var = sd^2'),
+                   pqAvail = TRUE),
     
     ## dpar    = list(BUGSdist = 'dpar(alpha, c)'),   ## not sure the state of this?  -DT
     
     dt      = list(BUGSdist = 'dt(mu, tau, df)',
                    Rdist    = 'dt_nonstandard(df, mu, sigma = 1/sqrt(tau))',
                    altParams = c('tau = sd^-2')),
+    # note because we wrote nonstandard dt, we don't at the moment have access to pt, qt
     
-    dunif   = list(BUGSdist = 'dunif(min, max)'),
+    dunif   = list(BUGSdist = 'dunif(min, max)',
+                   pqAvail = TRUE),
     
     dweib   = list(BUGSdist = 'dweib(shape, lambda, scale, rate)',
                    Rdist    = c('dweibull(shape, scale = lambda^(-1/shape))', 'dweibull(shape, scale = 1/rate)'),
-                   altParams= 'rate = 1/scale'),
+                   altParams= 'rate = 1/scale',
+                   pqAvail = TRUE),
     
     
     ####################################
