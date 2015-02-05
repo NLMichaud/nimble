@@ -158,7 +158,7 @@ ndf_createStochCalculate <- function(logProbNodeExpr, LHS, RHS) {
     } else {
         RHS <- addArg(RHS, 1, 'log')   # adds the last argument log=TRUE # This was changed to 1 from TRUE for easier C++ generation
         code <- substitute( LOGPROB <<- STOCHCALC,
-                           list(LOGPROG = logProbNodeExpr,
+                           list(LOGPROB = logProbNodeExpr,
                                 STOCHCALC = RHS))
         return(code)
     }
