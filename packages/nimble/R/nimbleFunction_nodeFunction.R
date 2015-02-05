@@ -50,12 +50,10 @@ ndf_createMethodList <- function(LHS, RHS, altParams, logProbNodeExpr, type, set
                  RHS=RHS)))
     }
     if(type == 'stoch') {
-        print('here')
-        browser()
         methodList <- eval(substitute(
             list(
                 simulate   = function() { LHS     <<- STOCHSIM                                                        },
-                calculate  = function() { STOCHCALC_FULLEXPR;   returnType(double());   return(invisible(LOGPROB)) },  ## used to be LOGPROB <<- STOCHCALC
+                calculate  = function() { STOCHCALC_FULLEXPR;   returnType(double());   return(invisible(LOGPROB)) },  ## used to be LOGPROB <<- STOCHCALC, but with truncation not always a simple assignment
                 getLogProb = function() {                          returnType(double());   return(LOGPROB)            }
             ),
             list(LHS       = LHS,
@@ -86,6 +84,15 @@ ndf_createMethodList <- function(LHS, RHS, altParams, logProbNodeExpr, type, set
     return(methodList)
 }
 
+## helper function that adds an argument to a call
+## used to add needed arguments for C versions of {d,p,q}${dist} functions
+addArg <- function(code, value, name) {
+    newArgIndex <- length(code) + 1
+    code[newArgIndex] <- value
+    names(code)[newArgIndex] <-  name
+    return(code)
+}
+
 
 ## changes 'dnorm(mean=1, sd=2)' into 'rnorm(1, mean=1, sd=2)'
 ndf_createStochSimulate <- function(RHS) {
@@ -106,45 +113,59 @@ ndf_createStochSimulateTrunc <- function(RHS) {
     upper <- RHS[[upperPosn]]
     RHS <- RHS[-c(lowerPosn, upperPosn)]
     dist <- substring(as.character(RHS[[1]]), 2, 1000)
-    # setup to do runif(1, pdist(lower,...), pdist(upper,...))
-    runifDev <- quote(runif(1, 0, 1))
-    template <- RHS
-    template[[1]] <- as.name(paste0("p", dist))
+
+    # setup for runif(1, pdist(lower,...), pdist(upper,...))
+
+    # pdist() expression template for inputs to runif()
+    pdistTemplate <- RHS
+    pdistTemplate[[1]] <- as.name(paste0("p", dist))
+    pdistTemplate <- addArg(pdistTemplate, 1, 'lower.tail')
+    pdistTemplate <- addArg(pdistTemplate, 0, 'log.p')
+    # create bounds for runif() using pdist expressions
+    MIN_EXPR <- 0
+    MAX_EXPR <- 1
     if(lower != -Inf) {
-        template[[2]] <- lower
-        runifDev[[3]] <- template
-    }
+        pdistTemplate[[2]] <- lower
+        MIN_EXPR <- pdistTemplate
+    } 
     if(upper != Inf) {
-        template[[2]] <- upper
-        runifDev[[4]] <- template
+        pdistTemplate[[2]] <- upper
+        MAX_EXPR <- pdistTemplate
     }
-    # setup to do qdist(unif_deviate,...)
+    
+    # now create full runif() expression
+    RUNIF_EXPR <- substitute(runif(1, MIN, MAX), list(
+        MIN = MIN_EXPR,
+        MAX = MAX_EXPR))
+
+    # create full qdist(runif(...),...) expression
     RHS[[1]] <- as.name(paste0("q", dist))
-    RHS[[2]] <- runifDev
+    RHS[[2]] <- RUNIF_EXPR
+    RHS <- addArg(RHS, 1, 'lower.tail')
+    RHS <- addArg(RHS, 0, 'log.p')
+
     return(RHS)
 }
 
 ## changes 'dnorm(mean=1, sd=2)' into 'dnorm(LHS, mean=1, sd=2, log=TRUE)'
 ndf_createStochCalculate <- function(logProbNodeExpr, LHS, RHS) {
-    browser()
     RHS[[1]] <- as.name(distributions[[as.character(RHS[[1]])]]$densityName)   # does the appropriate substituion of the distribution name
     if(length(RHS) > 1) {    for(i in (length(RHS)+1):3)   { RHS[i] <- RHS[i-1];     names(RHS)[i] <- names(RHS)[i-1] } }    # scoots all named arguments right 1 position
     RHS[[2]] <- LHS;     names(RHS)[2] <- ''    # adds the first (unnamed) argument LHS
-    newArgIndex <- length(RHS) + 1
-    RHS[newArgIndex] <- 1;      names(RHS)[newArgIndex] <- 'log'      # adds the last argument log=TRUE # This was changed to 1 from TRUE for easier C++ generation
+
     if("lower" %in% names(RHS) || "upper" %in% names(RHS)) {
         return(ndf_createStochCalculateTrunc(logProbNodeExpr, LHS, RHS))
     } else {
-        TEMPLATE <- quote(LOGPROB <<- STOCHCALC)
-        TEMPLATE[[2]] <- logProbNodeExpr
-        TEMPLATE[[3]] <- RHS
-        return(TEMPLATE)
+        RHS <- addArg(RHS, 1, 'log')   # adds the last argument log=TRUE # This was changed to 1 from TRUE for easier C++ generation
+        code <- substitute( LOGPROB <<- STOCHCALC,
+                           list(LOGPROG = logProbNodeExpr,
+                                STOCHCALC = RHS))
+        return(code)
     }
 }
 
 ## changes 'dnorm(mean=1, sd=2, lower=0, upper=3)' into correct truncated calculation
 ndf_createStochCalculateTrunc <- function(logProbNodeExpr, LHS, RHS) {
-    browser()
     lowerPosn <- which("lower" == names(RHS))
     upperPosn <- which("upper" == names(RHS))
     lower <- RHS[[lowerPosn]]
@@ -152,39 +173,37 @@ ndf_createStochCalculateTrunc <- function(logProbNodeExpr, LHS, RHS) {
     RHS <- RHS[-c(lowerPosn, upperPosn)]
     dist <- substring(as.character(RHS[[1]]), 2, 1000)
 
-    ifTemplate <- quote(if(lowerVal <= LHSval && LHSval <= upperVal) logProb_value <<- ok else logProb_value <<- -Inf)
-    
-    ## set up template expressions so we can fill in pieces
-    template <- quote(a - b)
-    template[[2]] <- RHS  # first term is the original ddist(...)
-
     pdistTemplate <- RHS
     pdistTemplate[[1]] <- as.name(paste0("p", dist))
+    pdistTemplate <- addArg(pdistTemplate, 1, 'lower.tail')
+    pdistTemplate <- addArg(pdistTemplate, 0, 'log.p')
 
-    expTemplate <- quote(exp(a))
-    
-    denomTemplate <- quote(log(1 - 0))
-
+    PDIST_LOWER <- 0
+    PDIST_UPPER <- 1
     if(lower != -Inf) {
         pdistTemplate[[2]] <- lower
-        expTemplate[[2]] <- pdistTemplate
-        denomTemplate[[2]][[3]] <- expTemplate
-    }
+        PDIST_LOWER <- pdistTemplate
+    } 
     if(upper != Inf) {
         pdistTemplate[[2]] <- upper
-        expTemplate[[2]] <- pdistTemplate
-        denomTemplate[[2]][[2]] <- expTemplate
+        PDIST_UPPER <- pdistTemplate
     }
 
-    template[[3]] <- denomTemplate
+    RHS <- addArg(RHS, 1, 'log')  # add log=1 now that pdist() created without 'log'
 
-    ifTemplate[[2]][[2]][[2]] <- lower
-    ifTemplate[[2]][[2]][[3]] <- ifTemplate[[2]][[3]][[2]] <- LHS
-    ifTemplate[[2]][[3]][[3]] <- upper
-    ifTemplate[[3]][[2]] <- ifTemplate[[4]][[2]] <- logProbNodeExpr
-    ifTemplate[[3]][[3]] <- template
-    
-    return(ifTemplate)
+    code <- substitute(if(LOWER <= VALUE & VALUE <= UPPER)
+                           LOGPROB <<- DENSITY - log(PDIST_UPPER - PDIST_LOWER)
+                       else LOGPROB <<- -Inf,
+                       list(
+                           LOWER = lower,
+                           UPPER = upper,
+                           VALUE = LHS,
+                           LOGPROB = logProbNodeExpr,
+                           DENSITY = RHS,
+                           PDIST_LOWER = PDIST_LOWER,
+                           PDIST_UPPER = PDIST_UPPER
+                       ))
+    return(code)
 }
         
 ## creates the accessor method to return value 'expr'

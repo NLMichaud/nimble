@@ -265,6 +265,7 @@ buildCopyLineToSEXP <- function(fromSym, toSym) {
 ## Fun can be an nfMethodRC (returned by RCfunction()), an RCfunProcessing, or a cppProject (each representing steps of processing)
 
 compileRCfunction <- function(fun, name, fileName, dirName, writeFiles = TRUE, compileCpp = TRUE, loadSO = TRUE, debug = FALSE, debugCpp = FALSE, returnInternals = FALSE, .useLib = UseLibraryMakevars) {
+    browser()
     if(missing(name)) name <- deparse(substitute(fun))
     Cname <- Rname2CppName(name)
     if(missing(fileName)) fileName <- Cname

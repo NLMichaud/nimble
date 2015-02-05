@@ -144,7 +144,7 @@ operatorRank <- c(
 distribution_dFuns <- as.character(unlist(lapply(distributions$translations, `[[`, 1)))
 distribution_rFuns <- as.character(unlist(lapply(distributions$translations, `[[`, 2))) 
 
-pqAvail <- sapply(nimble:::distributions$distObjects, '[[', 'discrete')
+pqAvail <- sapply(nimble:::distributions$distObjects, '[[', 'pqAvail')
 pqDists <- names(pqAvail)[pqAvail]
 
 distribution_pFuns <- gsub("^d", "p", pqDists)
