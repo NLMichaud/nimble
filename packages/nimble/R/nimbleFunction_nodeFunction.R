@@ -191,6 +191,10 @@ ndf_createStochCalculateTrunc <- function(logProbNodeExpr, LHS, RHS) {
 
     RHS <- addArg(RHS, 1, 'log')  # add log=1 now that pdist() created without 'log'
 
+    # unlike JAGS we have (L < X <= U), i.e., (L,U], as otherwise we would need
+    # machinations to deal with the X=L case (pdist functions provide only P(X<=L),P(X>L))
+    # this only matters for discrete distributions
+    # one option if necessary would be to check for discrete and then use ddist too
     code <- substitute(if(LOWER <= VALUE & VALUE <= UPPER)
                            LOGPROB <<- DENSITY - log(PDIST_UPPER - PDIST_LOWER)
                        else LOGPROB <<- -Inf,

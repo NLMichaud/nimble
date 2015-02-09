@@ -335,12 +335,16 @@ modelDefClass$methods(removeTruncationWrapping = function() {
     for(i in seq_along(declInfo)) {
         
         BUGSdecl <- declInfo[[i]]
-        if(BUGSdecl$type != 'stoch' || BUGSdecl$valueExpr[[1]] != "T") next
+        if(BUGSdecl$type != 'stoch' || !(BUGSdecl$valueExpr[[1]] == "T" || BUGSdecl$valueExpr[[1]] == "I")) next
 
         BUGSdecl$truncation <- list(
             lower = if(BUGSdecl$valueExpr[[3]] == "") -Inf else BUGSdecl$valueExpr[[3]],
-            upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]])
-        
+            upper = if(BUGSdecl$valueExpr[[4]] == "") Inf else BUGSdecl$valueExpr[[4]]
+            # type = as.character(BUGSdecl$valueExpr[[1]]) # T or I? could be used later to check that I() only used for top-level nodes
+            )
+        if(BUGSdecl$valueExpr[[1]] == "I")
+            warning(paste0("Interpreting I(,) as truncation (equivalent to T(,)) in ", deparse(BUGSdecl$code), "; this is only valid when ", deparse(BUGSdecl$targetExpr), " has no unobserved (stochastic) parents."))
+                
         newCode <- BUGSdecl$code
         if(BUGSdecl$truncation$lower == -Inf && BUGSdecl$truncation$upper == Inf) {  # user specified no bounds so not really truncated
             BUGSdecl$truncation <- NULL

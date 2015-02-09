@@ -163,7 +163,7 @@ processNonParseableCode <- function(text) {
     # transforms unparseable code to parseable code
     # at the moment this only deals with T() and I() syntax,
     # transforming to T(<distribution>,<lower>,<upper>)
-    text <- gsub("([^~]*)*~(.*?)\\)\\s*[TI]\\s*\\((.*)", "\\1~ T(\\2\\), \\3", text)
+    text <- gsub("([^~]*)*~(.*?)\\)\\s*([TI])\\s*\\((.*)", "\\1~ \\3(\\2\\), \\4", text)
     return(text)
 }
 
