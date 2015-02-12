@@ -25,6 +25,7 @@ dmulti <- function(x, size = sum(x), prob, log = FALSE) {
 }
 
 rmulti <- function(n = 1, size, prob) {
+   if(n != 1) stop('rmulti only handles n = 1 at the moment')
   .Call('C_rmulti', as.integer(size), as.double(prob))
 }
 
@@ -53,6 +54,26 @@ dmnorm_chol <- function(x, mean, chol, prec_param = TRUE, log = FALSE) {
 rmnorm_chol <- function(n = 1, mean, chol, prec_param = TRUE) {
  ## chol should be upper triangular
  ## FIXME: allow chol to be lower tri
-    if(n != 1) warning('rmnorm_chol only handles n = 1 at the moment')
+    if(n != 1) stop('rmnorm_chol only handles n = 1 at the moment')
     .Call('C_rmnorm_chol', as.double(mean), as.double(chol), as.logical(prec_param))
+}
+
+dinterval <- function(x, t, c, log = FALSE) {
+    .Call('C_dinterval', as.integer(x), as.double(t), as.double(c), as.logical(log))
+}
+
+rinterval <- function(n = 1, t, c) {
+    .Call('C_rinterval', as.integer(n), as.double(t), as.double(c))
+}
+
+# check this
+dconstraint <- function(x, cond, log = FALSE) {
+    .Call('C_dbinom', as.integer(x), as.integer(1), as.double(cond), as.logical(log))
+    # or write R code here or call C_dconstraint ???
+}
+
+rconstraint <- function(n = 1, cond) {
+    if(n != 1) stop('rconstraint only handles n = 1 at the moment')
+    .Call('C_rconstraint', as.integer(n), as.integer(1), as.double(cond))
+    # or write R code here or call C_dconstraint ???
 }
