@@ -198,3 +198,22 @@ void nimArr_rmnorm_chol(NimArr<1, double> &ans, NimArr<1, double> &mean, NimArr<
     ans = ansCopy;
   }
 }
+
+
+double nimArr_dcat(int x, double t, NimArr<1, double> &c, int give_log) {
+  int K = c.size();
+  double *cptr;
+  NimArr<1, double> cCopy;
+  cptr = nimArrCopyIfNeeded<1, double>(c, cCopy).getPtr();
+  double ans = dcat(x, t, cptr, K, give_log);
+  return(ans);
+}
+
+int nimArr_rcat(NimArr<1, double> &c) {
+  int K = c.size();
+  double *cptr;
+  NimArr<1, double> cCopy;
+  cptr = nimArrCopyIfNeeded<1, double>(c, cCopy).getPtr();
+  int ans = rcat(cptr, K);
+  return(ans);
+}
