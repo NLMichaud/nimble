@@ -32,8 +32,8 @@ distributionsInputList <- list(
                    types    = c('value = integer()', 'prob = double(1)'), 
                    discrete = TRUE),
 
-    dconstraint   = list(BUGSdist = 'dconstraint(cond)',
-                         discrete = TRUE),
+    ##dconstraint   = list(BUGSdist = 'dconstraint(cond)',
+    ##                     discrete = TRUE),
     # construct used to enforce constraints - 0/1 random variable depending on if cond is TRUE
 
     dinterval     = list(BUGSdist = 'dinterval(t, c)',

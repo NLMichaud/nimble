@@ -67,6 +67,7 @@ rinterval <- function(n = 1, t, c) {
 }
 
 # check this
+if(F) {
 dconstraint <- function(x, cond, log = FALSE) {
     .Call('C_dbinom', as.integer(x), as.integer(1), as.double(cond), as.logical(log))
     # or write R code here or call C_dconstraint ???
@@ -76,4 +77,5 @@ rconstraint <- function(n = 1, cond) {
     if(n != 1) stop('rconstraint only handles n = 1 at the moment')
     .Call('C_rconstraint', as.integer(n), as.integer(1), as.double(cond))
     # or write R code here or call C_dconstraint ???
+}
 }

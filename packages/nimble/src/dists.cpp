@@ -720,12 +720,13 @@ double dinterval(int x, double t, double* c, int K, int give_log)
 {
   if(x < 0 || x > K) return give_log ? R_NegInf : 0.0;
   if(x == 0 && t <= c[x]) return give_log ? 0.0 : 1.0;
+  if(x == K && t > c[x-1]) return give_log ? 0.0 : 1.0;
   else if(t <= c[x] && t > c[x - 1]) return give_log ? 0.0 : 1.0;
-  else return give_log ? R_NegInf : 0.0);
+  else return give_log ? R_NegInf : 0.0;
 }
 
 
-double rinterval(double t, double* c, int K)
+int rinterval(double t, double* c, int K)
 // scalar function that can be called directly by NIMBLE with same name as in R
 {
   for(int i = 0; i < K; i++) {
@@ -737,7 +738,7 @@ double rinterval(double t, double* c, int K)
 
 SEXP C_dinterval(SEXP x, SEXP t, SEXP c, SEXP return_log) {
   // this will call NIMBLE's dinterval() for computation on scalars
-  // c must be a single vector of cutpoints, but x and t can be vectors
+  // c must be a single vector of cutpoints; x and t can be vectors
   if(!isInteger(x) || !isReal(t) || !isReal(c) || !isLogical(return_log)) 
     RBREAK("Error (C_dinterval): invalid input type for one of the arguments.");
   int n_x = LENGTH(x);
@@ -751,7 +752,7 @@ SEXP C_dinterval(SEXP x, SEXP t, SEXP c, SEXP return_log) {
   }
     
   PROTECT(ans = allocVector(REALSXP, n_x));  
-  double* c_x = REAL(x);
+  int* c_x = INTEGER(x);
   double* c_t = REAL(t);
   double* c_c = REAL(c);
 
@@ -763,7 +764,7 @@ SEXP C_dinterval(SEXP x, SEXP t, SEXP c, SEXP return_log) {
   } else {
     int i_t = 0;
     for(int i = 0; i < n_x; i++) {
-      REAL(ans)[i] = dinterval(c_x[i], c_t[i_t++], c_c, give_log);
+      REAL(ans)[i] = dinterval(c_x[i], c_t[i_t++], c_c, n_c, give_log);
       // implement recycling:
       if(i_t == n_t) i_t = 0;
     }
@@ -774,7 +775,6 @@ SEXP C_dinterval(SEXP x, SEXP t, SEXP c, SEXP return_log) {
 }
   
 SEXP C_rinterval(SEXP n, SEXP t, SEXP c) {
-  // this will call R's rt() for computation on scalars
   if(!isInteger(n) || !isReal(t) || !isReal(c))
     RBREAK("Error (C_rinterval): invalid input type for one of the arguments.");
   int n_t = LENGTH(t);
@@ -783,7 +783,7 @@ SEXP C_rinterval(SEXP n, SEXP t, SEXP c) {
   SEXP ans;
     
   if(n_values == 0) {
-    PROTECT(ans = allocVector(REALSXP, 0));
+    PROTECT(ans = allocVector(INTSXP, 0));
     UNPROTECT(1);
     return ans;
   }
@@ -799,11 +799,11 @@ SEXP C_rinterval(SEXP n, SEXP t, SEXP c) {
   if(n_t == 1) {
     // if no parameter vectors, more efficient not to deal with multiple indices
     for(int i = 0; i < n_values; i++) 
-      REAL(ans)[i] = rinterval(*c_t, c_c, K);
+      INTEGER(ans)[i] = rinterval(*c_t, c_c, K);
   } else {
     int i_t = 0;
     for(int i = 0; i < n_values; i++) {
-      REAL(ans)[i] = rinterval(c_t[i_t++], c_c, K);
+      INTEGER(ans)[i] = rinterval(c_t[i_t++], c_c, K);
       // implement recycling:
       if(i_t == n_t) i_t = 0;
     }

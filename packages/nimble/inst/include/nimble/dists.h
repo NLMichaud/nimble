@@ -26,6 +26,8 @@ extern "C" {
   SEXP C_rmulti(SEXP, SEXP);
   SEXP C_ddirch(SEXP, SEXP, SEXP);
   SEXP C_rdirch(SEXP);
+  SEXP C_dinterval(SEXP, SEXP, SEXP, SEXP);
+  SEXP C_rinterval(SEXP, SEXP, SEXP);
 
 }
 
@@ -44,8 +46,10 @@ void rmnorm_chol(double *, double*, double*, int, int);
 double dwish_chol(double*, double*, double, int, int, int);
 void rwish_chol(double*, double*, double, int, int);
 
+double dinterval(int, double, double*, int, int);
+int rinterval(double, double*, int);
 
-// SHOULD BE IN nimDists.h
+// SHOULD BE IN nimDists.h - who wrote this; I don't think it's the case. -- Chris
 
 extern "C" {
   SEXP C_rt_nonstandard(SEXP, SEXP, SEXP, SEXP);
