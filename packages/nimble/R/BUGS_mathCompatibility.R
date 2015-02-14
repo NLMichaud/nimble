@@ -18,6 +18,7 @@ logit <- function(x) log(x / (1-x))
 phi <- function(x) pnorm(x) ## same as iprobit
 pow <- function(x1, x2) x1^x2
 nimbleStep <- function(x) ifelse(x >= 0, 1, 0) ## We rename step to nimbleStep before execution to avoid masking the R step function
+ind <- function(x) ifelse(x == 0, 0, 1)
 inverse <- function(x) solve(x)
 cube <- function(x) x^3
 inprod <- function(v1, v2) sum(v1 * v2)

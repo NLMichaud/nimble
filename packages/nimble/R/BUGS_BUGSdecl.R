@@ -8,7 +8,9 @@ nimbleOrRfunctionNames <- c('+','-','/','*','(','exp','log','pow','^','%%','%*%'
                             'cube', 'abs', 'lgamma', 'loggam', 'log1p', 'lfactorial', ##'factorial', 'gamma',
                             'ceiling', 'floor', 'round', 'trunc',
                             'mean','sum','max','min','prod',
-                            'asRow', 'asCol')
+                            'asRow', 'asCol',
+                            '>', '&'
+                            )
 
 #' BUGSdeclClass contains the information extracted from one BUGS declaration
 BUGSdeclClass <- setRefClass('BUGSdeclClass',

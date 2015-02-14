@@ -29,5 +29,6 @@ double pairmax(double x1, double x2) {return(x1 > x2 ? x1 : x2);}
 double pairmin(double x1, double x2) {return(x1 < x2 ? x1 : x2);}
 //double phi(double x) {return(pnorm(x, 0., 1., 1, 0));}
 int nimbleStep(double x) { return(x >= 0 ? 1 : 0);}
+int ind(int x) { return(x == 0 ? 0 : 1);}
 double cube(double x) {return(x*x*x);}
 double inprod(double v1, double v2) {return(v1*v2);}

@@ -59,6 +59,7 @@ extern "C" {
 double dt_nonstandard(double, double, double, double, int);
 double rt_nonstandard(double, double, double);
 
-
+double dconstraint(int, int, int);
+int rconstraint(int);
 
 #endif
