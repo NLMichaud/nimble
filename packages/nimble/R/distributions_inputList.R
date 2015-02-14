@@ -37,6 +37,8 @@ distributionsInputList <- list(
     # construct used to enforce constraints - 0/1 random variable depending on if cond is TRUE
 
     dinterval     = list(BUGSdist = 'dinterval(t, c)',
+                         types    = c('value = integer()', 't = double()',
+                             'c = double(1)'),
                          discrete = TRUE),
     # construct used to enforce censoring - takes values 0,1,...,len(c) depending on which
     # interval t falls into

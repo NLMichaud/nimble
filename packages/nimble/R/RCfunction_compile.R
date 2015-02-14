@@ -80,14 +80,13 @@ RCfunProcessing <- setRefClass('RCfunProcessing',
                                    ),
                                methods = list(
                                    process = function(debug = FALSE, debugCpp = FALSE, debugCppLabel = character()) {
-                                       
                                        if(!is.null(nimbleOptions$debugRCfunProcessing)) {
                                            if(nimbleOptions$debugRCfunProcessing) {
                                                debug <- TRUE
                                                writeLines('Debugging RCfunProcessing (nimbleOptions$debugRCfunProcessing is set to TRUE)') 
                                            }
                                        }
-                                   	
+
                                        if(inherits(compileInfo$origLocalSymTab, 'uninitializedField')) {
                                            setupSymbolTables()
                                        }
@@ -115,6 +114,7 @@ RCfunProcessing <- setRefClass('RCfunProcessing',
                                            writeLines('***** READY FOR buildInterms *****')
                                            browser()
                                        }
+
                                        
                                        ## build intermediate variables
                                        exprClasses_buildInterms(compileInfo$nimExpr)

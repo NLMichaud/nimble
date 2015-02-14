@@ -25,4 +25,7 @@ void nimArr_rmnorm_chol(NimArr<1, double> &ans, NimArr<1, double> &mean, NimArr<
 double nimArr_dinterval(int x, double t, NimArr<1, double> &c, int give_log);
 int nimArr_rinterval(double t, NimArr<1, double> &c);
 
+double nimArr_dinterval(int x, double t, double c, int give_log);
+int nimArr_rinterval(double t, double c);
+
 #endif
