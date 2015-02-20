@@ -212,31 +212,31 @@ readBUGSmodel <- function(model, data = NULL, inits = NULL, dir = NULL, useInits
     # process model information
 
     modelFileOutput <- modelName <- NULL
-    if(is.function(model)) modelText <- mergeMultiLineStatements(deparse(body(model)))
-    if(is.character(model)) {
-        if(!is.null(dir) && dir == "") modelFile <- model else modelFile <- file.path(dir, model)  # check for "" avoids having "/model.bug" when user provides ""
-        modelName <- gsub("\\..*", "", basename(model))
-        if(!file.exists(modelFile)) {
-            possibleNames <- c(paste0(modelFile, '.bug'), paste0(modelFile, '.txt'))
-            fileExistence <- file.exists(possibleNames)
-            if(!sum(fileExistence)) {
-                stop("readBUGSmodel: 'model' input does not reference an existing file.")
-            } else {
-                if(sum(fileExistence) > 1)
-                    warning("readBUGSmodel: multiple possible model files; using .bug file.")
-                modelFile <- possibleNames[which(fileExistence)[1]]
+    if(is.function(model) || is.character(model)) {
+        if(is.function(model)) modelText <- mergeMultiLineStatements(deparse(body(model)))
+        if(is.character(model)) {
+            if(!is.null(dir) && dir == "") modelFile <- model else modelFile <- file.path(dir, model)  # check for "" avoids having "/model.bug" when user provides ""
+            modelName <- gsub("\\..*", "", basename(model))
+            if(!file.exists(modelFile)) {
+                possibleNames <- c(paste0(modelFile, '.bug'), paste0(modelFile, '.txt'))
+                fileExistence <- file.exists(possibleNames)
+                if(!sum(fileExistence)) {
+                    stop("readBUGSmodel: 'model' input does not reference an existing file.")
+                } else {
+                    if(sum(fileExistence) > 1)
+                        warning("readBUGSmodel: multiple possible model files; using .bug file.")
+                    modelFile <- possibleNames[which(fileExistence)[1]]
+                }
             }
+            modelFileOutput <- processModelFile(modelFile)
+            modelText <- mergeMultiLineStatements(modelFileOutput$modelLines)
         }
-        modelFileOutput <- processModelFile(modelFile)
-        modelText <- mergeMultiLineStatements(modelFileOutput$modelLines)
+        
+        # deal with T() and I() unparseable syntax
+        modelText <- processNonParseableCode(modelText)
+        model <- parse(text = modelText)[[1]]
+        # note that split lines that are parseable are dealt with by parse()
     }
-    
-
-    # deal with T() and I() unparseable syntax
-    modelText <- processNonParseableCode(modelText)
-    model <- parse(text = modelText)[[1]]
-    # note that split lines that are parseable are dealt with by parse()
-
     
     if(! class(model) == "{")
         stop("readBUGSmodel: cannot process 'model' input.")
