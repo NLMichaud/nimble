@@ -77,6 +77,7 @@ modelDefClass <- setRefClass('modelDefClass',
                                  assignDimensions               = function() {},
                                  initializeContexts             = function() {},
                                  processBUGScode                = function() {},
+                                 removeNonConstants             = function() {},
                                  addMissingIndexing             = function() {},
                                  removeTruncationWrapping       = function() {},
                                  expandDistributions            = function() {},
@@ -131,6 +132,7 @@ modelDefClass$methods(setupModel = function(code, constants, dimensions, debug) 
     assignDimensions(dimensions)      ## uses 'dimensions' argument, sets field: dimensionList
     initializeContexts()              ## initializes the field: contexts
     processBUGScode()                 ## uses BUGScode, sets fields: contexts, declInfo$code, declInfo$contextID
+    removeNonConstants()              ## deals with case when data is passed in as constants
     addMissingIndexing()              ## overwrites declInfo, using dimensionsList, fills in any missing indexing
     removeTruncationWrapping()        ## transforms T(ddist(),lower,upper) to put bounds into declInfo
     expandDistributions()             ## overwrites declInfo for stochastic nodes: calls match.call() on RHS      (uses distributions$matchCallEnv)
@@ -222,6 +224,7 @@ reprioritizeColonOperator <- function(code) {
     return(code)
 }
 
+    
 modelDefClass$methods(processBUGScode = function(code = NULL, contextID = 1, lineNumber = 0) {
     ## uses BUGScode, sets fields: contexts, declInfo$code, declInfo$contextID.
     ## all processing of code is done by BUGSdeclClass$setup(code, contextID).
@@ -267,6 +270,14 @@ modelDefClass$methods(processBUGScode = function(code = NULL, contextID = 1, lin
     }
     lineNumber
 })
+
+modelDefClass$methods(removeNonConstants = function() {
+    # removes items from constantsNamesList that appear as variables in declInfo
+    # this deals with case when 'data' are passed in as 'constants'
+    vars <- sapply(declInfo, function(x) x$targetVarName)
+    constantsNamesList <<- constantsNamesList[!constantsNamesList %in% vars]
+})
+                      
 modelDefClass$methods(addMissingIndexing = function() {
     ## overwrites declInfo, using dimensionsList, fills in any missing indexing
     for(i in seq_along(declInfo)) {

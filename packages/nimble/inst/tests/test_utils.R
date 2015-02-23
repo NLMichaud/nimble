@@ -176,6 +176,7 @@ test_mcmc <- function(example, model, data = NULL, inits = NULL,
 
       if(doCpp) {
           if(verbose) {
+              cat("Posterior summary from initial run:\n")
               start <- round(numItsC / 2) + 1
               try(print(apply(C_samples[start:numItsC, , drop = FALSE], 2, summarize_posterior)))
           }
