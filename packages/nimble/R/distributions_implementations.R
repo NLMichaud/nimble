@@ -66,7 +66,6 @@ rinterval <- function(n = 1, t, c) {
     .Call('C_rinterval', as.integer(n), as.double(t), as.double(c))
 }
 
-# check this
 dconstraint <- function(x, cond, log = FALSE) {
     if(x == cond || x == 0) result <- 1 else result <- 0
     if(log) return(log(result)) else return(result)
