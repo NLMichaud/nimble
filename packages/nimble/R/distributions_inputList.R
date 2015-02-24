@@ -81,7 +81,7 @@ distributionsInputList <- list(
     
     dgamma  = list(BUGSdist = 'dgamma(shape, rate, scale, mean, sd)',
                    Rdist    = c('dgamma(shape, scale = 1/rate)', 'dgamma(shape = mean^2/sd^2, scale = sd^2/mean)'),
-                   altParams= 'rate = 1/scale',
+                   altParams= c('rate = 1/scale', 'mean = scale*shape', 'sd = scale * sqrt(shape)'),
                    pqAvail = TRUE),
     
     ## gen.gamma = list(BUGSdist = 'gen.gamma(r, mu, beta)'),   ## not sure the state of this?  -DT
@@ -93,6 +93,7 @@ distributionsInputList <- list(
     
     dlogis  = list(BUGSdist = 'dlogis(location, rate, scale)',
                    Rdist    = 'dlogis(location, scale = 1/rate)',
+                   altParams = 'rate = 1/scale',
                    pqAvail = TRUE),
     
     dnorm   = list(BUGSdist = 'dnorm(mean, tau, sd, var)',
@@ -112,7 +113,7 @@ distributionsInputList <- list(
     
     dweib   = list(BUGSdist = 'dweib(shape, lambda, scale, rate)',
                    Rdist    = c('dweibull(shape, scale = lambda^(-1/shape))', 'dweibull(shape, scale = 1/rate)'),
-                   altParams= 'rate = 1/scale',
+                   altParams= c('rate = 1/scale', 'lambda = scale^(-shape)' ), 
                    pqAvail = TRUE),
     
     
