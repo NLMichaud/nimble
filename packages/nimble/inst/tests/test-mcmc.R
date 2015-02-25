@@ -56,6 +56,7 @@ test_mcmc('oxford', numItsC = 1000, resampleData = TRUE)
 
 test_mcmc('pump', numItsC = 1000, resampleData = TRUE)
 # 100% coverage; looks fine
+# gives warning about In dgamma(model$theta[i], shape = model$alpha, scale = model$lifted_d1_over_beta,  : NaNs produced
 
 test_mcmc('rats', numItsC = 1000, resampleData = TRUE)
 # 93.8% coverage; looks fine and compares well to JAGS
@@ -66,7 +67,7 @@ test_mcmc('seeds', numItsC = 1000, resampleData = TRUE)
 
 test_mcmc('dugongs', numItsC = 1000, resampleData = TRUE)
 # 100% coverage; looks fine
-
+# gives warning about In log(x/(1 - x)) : NaNs produced
 
 test_mcmc('epil', model = 'epil2.bug', inits = 'epil-inits.R',
               data = 'epil-data.R', numItsC = 1000, resampleData = TRUE)
@@ -310,6 +311,13 @@ sampleVals = list(x = c(3.950556165467749, 1.556947815895538, 1.598959152023738,
 
 test_mcmc(model = code, exactSample = sampleVals, seed = 0, mcmcControl = list(scale=0.01))
 
+# this fails because NAs not same in R and C, but otherwise is fine
+#Error : Test failed: 'test of equality of output from R and C versions of code MCMC'
+#Not expected: R_samples not equal to C_subSamples
+#'is.NA' value mismatch: 10 in current 2 in target
+#R and C posterior samples are not equal.
+
+
 ### Dirichlet-multinomial conjugacy
 
 # single multinomial
@@ -368,6 +376,7 @@ test_mcmc(model = code, data= data, seed = 0, numItsC = 1000,
           resultsTolerance = list(mean = list(p = matrix(.05, m, K),
                                       alpha = c(5,10,10,20,.5))))
 
+# a few parameters where results are out of tolerance
 # note alphas mix poorly (and are highly correlated),
 # presumably because of cross-level dependence between
 # p's and alphas.  cross-level sampler would probably work well here,
