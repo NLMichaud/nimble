@@ -132,7 +132,7 @@ modelDefClass$methods(setupModel = function(code, constants, dimensions, debug) 
     assignDimensions(dimensions)      ## uses 'dimensions' argument, sets field: dimensionList
     initializeContexts()              ## initializes the field: contexts
     processBUGScode()                 ## uses BUGScode, sets fields: contexts, declInfo$code, declInfo$contextID
-    removeNonConstants()              ## deals with case when data is passed in as constants
+    #removeNonConstants()              ## deals with case when data is passed in as constants; leaving out for now per convo with Perry
     addMissingIndexing()              ## overwrites declInfo, using dimensionsList, fills in any missing indexing
     removeTruncationWrapping()        ## transforms T(ddist(),lower,upper) to put bounds into declInfo
     expandDistributions()             ## overwrites declInfo for stochastic nodes: calls match.call() on RHS      (uses distributions$matchCallEnv)
