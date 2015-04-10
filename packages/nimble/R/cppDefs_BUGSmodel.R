@@ -82,11 +82,11 @@ cppBUGSmodelClass <- setRefClass('cppBUGSmodelClass',
                                                                   code = cppCodeBlock( code = putCodeLinesInBrackets(codeLines)))
                                          functionDefs[['pointAtAll']] <<- newFun
                                      },
-                                     buildNodes = function(where = globalenv(), debugCpp = FALSE) {
+                                     buildNodes = function(where = globalenv(), ...) {
                                          for(i in names(model$nodeFunctions)) {
                                              nimbleProject$addNimbleFunction(model$nodeFunctions[[i]], fromModel = TRUE)
                                          }
-                                         nodeFuns <<- nimbleProject$compileNimbleFunctionMulti(model$nodeFunctions, isNode = TRUE, returnCppClass = TRUE, fromModel = TRUE) ## fromModel is redundant here
+                                         nodeFuns <<- nimbleProject$compileNimbleFunctionMulti(model$nodeFunctions, isNode = TRUE, returnCppClass = TRUE, fromModel = TRUE, ...) ## fromModel is redundant here
                                          ##for(i in names(model$nodeGenerators)) {
                                              ##nfName <- paste0('nf',i)
                                           
@@ -94,14 +94,14 @@ cppBUGSmodelClass <- setRefClass('cppBUGSmodelClass',
                                          ##   nimbleProject$buildNimbleFunctionCompilationInfo(generatorName = generatorName)
                                          ##}
                                      },
-                                     buildAll = function(buildNodeDefs = TRUE, where = globalenv(), debugCpp = FALSE) {
+                                     buildAll = function(buildNodeDefs = TRUE, where = globalenv(), ...) {
                                          makeCppNames() 
                                          buildVars()
                                          buildConstructorFunctionDef()
                                          buildSEXPgenerator()
                                          buildSEXPfinalizer()
                                          buildPointAtAll()
-                                         if(buildNodeDefs) buildNodes(where = where, debugCpp = debugCpp)
+                                         if(buildNodeDefs) buildNodes(where = where, ...)
                                      }
                                      )
                                  )
