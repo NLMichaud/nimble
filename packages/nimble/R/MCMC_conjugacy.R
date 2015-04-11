@@ -267,7 +267,7 @@ conjugacyClass <- setRefClass(
             functionBody <- codeBlockClass()
             
             ## only if we're verifying conjugate posterior distributions: get initial targetValue, and modelLogProb -- getLogProb(model, calcNodes)
-            if(nimbleOptions$verifyConjugatePosteriors) {
+            if(nimbleOptions()$verifyConjugatePosteriors) {
                 functionBody$addCode({ 
                 					   modelLogProb0 <- getLogProb(model, calcNodes)
                                        origValue <- model[[targetNode]] })
@@ -284,7 +284,7 @@ conjugacyClass <- setRefClass(
             }, list(RPOSTERIORCALL = posteriorObject$rCallExpr))
             
             ## only if we're verifying conjugate posterior distributions: figure out if conjugate posterior distribution is correct
-            if(nimbleOptions$verifyConjugatePosteriors) {
+            if(nimbleOptions()$verifyConjugatePosteriors) {
                 functionBody$addCode({modelLogProb1 <- getLogProb(model, calcNodes)
                                       posteriorLogDensity0 <- DPOSTERIORCALL_ORIG
                                       posteriorLogDensity1 <- DPOSTERIORCALL_NEW
