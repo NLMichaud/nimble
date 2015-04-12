@@ -219,7 +219,6 @@ conjugacyClass <- setRefClass(
         
         genSetupFunction = function() {
             functionBody <- codeBlockClass()
-            
             ## preliminaries
             functionBody$addCode({
                 targetNode      <- control$targetNode
