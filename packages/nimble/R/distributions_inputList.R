@@ -19,25 +19,28 @@ distributionsInputList <- list(
     dbern   = list(BUGSdist = 'dbern(prob)',
                    Rdist    = 'dbinom(size = 1, prob)',
                    discrete = TRUE,
-                   pqAvail = TRUE),
+                   pqAvail = TRUE,
+                   types = c('value = integer(0)', 'prob = double(0)')),
     
     dbin    = list(BUGSdist = 'dbin(prob, size)',
                    Rdist    = 'dbinom(size, prob)',
                    discrete = TRUE,
-                   pqAvail = TRUE),
+                   pqAvail = TRUE,
+                   types = c('value = integer(0)', 'prob = double(0)', 'size = integer(0)')),
     
     dcat    = list(BUGSdist = 'dcat(prob)',
                    ##Rdist    = 'dcat(prob, K = length(prob))',
                    Rdist    = 'dcat(prob)',
-                   types    = c('value = integer()', 'prob = double(1)'), 
+                   types    = c('value = integer(0)', 'prob = double(1)'), 
                    discrete = TRUE),
     
     dconstraint   = list(BUGSdist = 'dconstraint(cond)',
-                         discrete = TRUE),
+                         discrete = TRUE,
+                         types = c('value = integer(0)', 'cond = integer(0)')),
     # construct used to enforce constraints - 0/1 random variable depending on if cond is TRUE
 
     dinterval     = list(BUGSdist = 'dinterval(t, c)',
-                         types    = c('value = integer()', 't = double()',
+                         types    = c('value = integer(0)', 't = double(0)',
                              'c = double(1)'),
                          discrete = TRUE),
     # construct used to enforce censoring - takes values 0,1,...,len(c)
@@ -46,17 +49,19 @@ distributionsInputList <- list(
     dmulti  = list(BUGSdist = 'dmulti(prob, size)',
    ##                Rdist    = 'dmulti(size, prob, K = length(prob))',
                    Rdist    = 'dmulti(size, prob)',
-                   types    = c('value = double(1)', 'prob = double(1)', 'size = integer(0)'),
+                   types    = c('value = integer(1)', 'prob = double(1)', 'size = integer(0)'),
                    discrete = TRUE),
     
     dnegbin = list(BUGSdist = 'dnegbin(prob, size)',
                    Rdist    = 'dnbinom(size, prob)',
                    discrete = TRUE,
-                   pqAvail = TRUE),
+                   pqAvail = TRUE,
+                   types = c('value = integer(0)', 'size = integer(0)', 'prob = double(0)')),
     
     dpois   = list(BUGSdist = 'dpois(lambda)',
                    discrete = TRUE,
-                   pqAvail = TRUE),
+                   pqAvail = TRUE,
+                   types = c('value = integer(0)', 'lambda = double(0)')),
     
     
     ##############################################
@@ -132,16 +137,16 @@ distributionsInputList <- list(
                    Rdist    = c('dmnorm_chol(mean, cholesky = chol(prec), prec_param = 1)', 'dmnorm_chol(mean, cholesky = chol(cov), prec_param = 0)', 'dmnorm_chol(mean, cholesky, prec_param)'),
 ##                   altParams= c('prec = if(prec_param) crossprod(cholesky) else inverse(crossprod(cholesky))', 'cov = if(prec_param) inverse(crossprod(cholesky)) else crossprod(cholesky)'),
         altParams= c('prec = cholesky', 'cov = cholesky'), ## NOT CORRECT. These are placeholders to get other parts working
-        types    = c('value = double(1)', 'mean = double(1)', 'cholesky = double(2)', 'prec_param = integer()', 'prec = double(2)', 'cov = double(2)')),
+        types    = c('value = double(1)', 'mean = double(1)', 'cholesky = double(2)', 'prec_param = integer(0)', 'prec = double(2)', 'cov = double(2)')),
     
     ## dmt     = list(BUGSdist = 'dmt(mu, T, k)'),   ## not sure the state of this?  -DT
     
     dwish   = list(BUGSdist = 'dwish(R, df, S)',
                    ##Rdist    = c('dwish_chol(cholesky = chol(R), df, p = dim(R)[1], scale_param = 0)', 'dwish_chol(cholesky = chol(S), df, p = dim(S)[1], scale_param = 1)'),
                    Rdist    = c('dwish_chol(cholesky = chol(R), df, scale_param = 0)', 'dwish_chol(cholesky = chol(S), df, scale_param = 1)'),
-                   ##types    = c('value = double(2)', 'chol = double(2)', 'p = integer()', 'scale_param = integer()'))
+                   ##types    = c('value = double(2)', 'chol = double(2)', 'p = integer(0)', 'scale_param = integer(0)'))
                    altParams = c('R = cholesky', 'S = cholesky'), ##NOT CORRECT. These are placeholders to get other parts working.
-                   types    = c('value = double(2)', 'R = double(2)', 'S = double(2)', 'cholesky = double(2)', 'scale_param = integer()'))
+                   types    = c('value = double(2)', 'R = double(2)', 'S = double(2)', 'cholesky = double(2)', 'scale_param = integer(0)'))
 )
 
 
