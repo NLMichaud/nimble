@@ -1,6 +1,14 @@
 assignmentAsFirstArgFuns <- c('nimArr_rmnorm_chol', 'nimArr_rwish_chol', 'nimArr_rmulti', 'nimArr_rdirch', 'getValues')
 
 
+getAssignmentAsFirstArgFuns <- function() {
+    if(!exists('assignmentAsFirstArgFuns'), nimbleUserObjects) {
+        return(assignmentAsFirstArgFuns)
+    } else {
+        return(c(assignmentAsFirstArgFuns, nimbleUserObjects$assignmentAsFirstArgFuns))
+    }
+}              
+
 sizeCalls <- c(makeCallList(binaryOperators, 'sizeBinaryCwise'),
                 makeCallList(binaryMidLogicalOperators, 'sizeBinaryCwiseLogical'),
                 makeCallList(binaryOrUnaryOperators, 'sizeBinaryUnaryCwise'),
@@ -51,6 +59,15 @@ sizeCalls <- c(makeCallList(binaryOperators, 'sizeBinaryCwise'),
                makeCallList(c('calculate', 'getLogProb', 'decide', 'size', 'getsize'), 'sizeScalar'),
                makeCallList(c('simulate', 'blank', 'nfMethod', 'nimFunListAccess', 'getPtr'), 'sizeUndefined')
                )
+
+
+getSizeCall <- function(codeName) {
+    result <- sizeCalls[[codeName]]
+    if(is.null(result) && exists('sizeCalls', nimbleUserObjects))
+        result <- nimbleUserObjects$sizeCalls[[codeName]]
+    return(result)
+}
+
 
 scalarOutputTypes <- list(decide = 'logical', size = 'integer', isnan = 'logical', ISNA = 'logical', '!' = 'logical', nimArr_rcat = 'integer', nimArr_rinterval = 'integer')
 
@@ -122,7 +139,7 @@ exprClasses_setSizes <- function(code, symTab, typeEnv) { ## input code is exprC
             return(invisible(NULL))
         }
         
-        sizeCall <- sizeCalls[[code$name]]
+        sizeCall <- getSizeCalls(code$name)
 
         if(!is.null(sizeCall)) {
             return(eval(call(sizeCall, code, symTab, typeEnv)))
@@ -615,7 +632,7 @@ sizeAssignAfterRecursing <- function(code, symTab, typeEnv, NoEigenizeMap = FALS
     code$type <- code$args[[1]]$type <- RHStype
     code$sizeExprs <- code$args[[1]]$sizeExprs <- RHSsizeExprs
 
-    if(RHSname %in% assignmentAsFirstArgFuns) {
+    if(RHSname %in% getAssignmentAsFirstArgFuns()) {
         code$name <- RHS$name
         oldArgs <- RHS$args
         code$args <- list(length(oldArgs) + 1)
@@ -626,6 +643,8 @@ sizeAssignAfterRecursing <- function(code, symTab, typeEnv, NoEigenizeMap = FALS
     }
     return(assert)
 }
+
+
 
 sizeasDoublePtr <- function(code, symTab, typeEnv) {
     ## This could also handle copies from ints to doubles, which would ALWAYS require a copy
