@@ -56,9 +56,8 @@ BUGSmodel <- function(code, name, constants=list(), dimensions=list(), data=list
 #' constants = list(prior_sd = 1)
 #' data = list(x = 4)
 #' Rmodel <- nimbleModel(code, constants = constants, data = data)
-nimbleModel <- function(code, name, constants=list(), dimensions=list(), data=list(), inits=list(), returnDef = FALSE, where=globalenv(), debug=FALSE)
+nimbleModel <- function(code, constants=list(), data=list(), inits=list(), dimensions=list(), returnDef = FALSE, where=globalenv(), debug=FALSE, name)
     BUGSmodel(code, name, constants, dimensions, data, inits, returnModel = !returnDef, where, debug)
-
 
 #' Turn BUGS model code into an object for use in \code{nimbleModel} or \code{readBUGSmodel}
 #'
@@ -380,7 +379,7 @@ readBUGSmodel <- function(model, data = NULL, inits = NULL, dir = NULL, useInits
   # create R model
   # 'data' will have constants and data, but BUGSmodel is written to be ok with this
   # we can't separate them before building model as we don't know names of nodes in model
-  Rmodel <- nimbleModel(model, ifelse(is.null(modelName), 'model', modelName), constants = data, dimensions = dims, inits = inits, debug = debug)
+  Rmodel <- nimbleModel(model, name = ifelse(is.null(modelName), 'model', modelName), constants = data, dimensions = dims, inits = inits, debug = debug)
 
   # now provide values for data nodes from 'data' list
   if(FALSE) { # now handled within nimbleModel
