@@ -20,6 +20,13 @@ DEVELOPER LEVEL CHANGES
 
 -- full suite of testing for truncation/censoring/constraints added (tests/test-trunc.R)
 
+BUG FIXES
+
+-- set default for deparse to width.cutoff=500L to avoid splitting of lines when going from expressions to string names
+
+
+
+
 
                         CHANGES IN VERSION 0.3-1 (Mar. 7, 2015)
 

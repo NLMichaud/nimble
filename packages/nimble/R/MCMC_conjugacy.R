@@ -708,7 +708,7 @@ cc_expandDetermNodesInExpr <- function(expr, model) {
   
 
     if(is.name(expr)    ||    (is.call(expr) && (expr[[1]] == '['))) {    # expr is a name, or an indexed name
-        exprText <- deparse(expr)
+        exprText <- nimDeparse(expr)
         
         
         graphID = NULL
@@ -734,7 +734,7 @@ cc_expandDetermNodesInExpr <- function(expr, model) {
 
         }
         else
-				stop(paste0('something went wrong processing: ', deparse(expr)))
+				stop(paste0('something went wrong processing: ', nimDeparse(expr)))
 			}
         
 #        if(any(exprText == model$getMaps('nodeNamesStoch')))        return(expr)      # return stochastic nodes
@@ -747,7 +747,7 @@ cc_expandDetermNodesInExpr <- function(expr, model) {
     if(is.call(expr)) {
         for(i in seq_along(expr)[-1])    expr[[i]] <- cc_expandDetermNodesInExpr(expr[[i]], model)
         return(expr) }
-    stop(paste0('something went wrong processing: ', deparse(expr)))
+    stop(paste0('something went wrong processing: ', nimDeparse(expr)))
 }
 
 ## creates an expression of the form [cc_structureExprName](element11, element12, etc...) to represent vectors / arrays defined in terms of other stoch/determ nodes
@@ -761,7 +761,7 @@ cc_createStructureExpr <- function(expr) {
 
 ## Same as above, but uses model to expandNodeNames
 cc_createStructureExpr_fromModel <- function(expr, model) {
-  expandedNodeNamesVector <- model$expandNodeNames(deparse(expr))
+  expandedNodeNamesVector <- model$expandNodeNames(nimDeparse(expr))
   expandedNodeExprList <- lapply(expandedNodeNamesVector, function(x) parse(text=x)[[1]])
   structureExpr <- c(cc_structureExprName, expandedNodeExprList)
   structureExprCall <- as.call(structureExpr)
@@ -803,9 +803,9 @@ cc_nodeInExpr <- function(node, expr) { return(node %in% cc_getNodesInExpr(expr)
 cc_getNodesInExpr <- function(expr) {
     if(is.numeric(expr)) return(character(0))   ## expr is numeric
     if(is.logical(expr)) return(character(0))   ## expr is logical
-    if(is.name(expr) || (is.call(expr) && (expr[[1]] == '['))) return(deparse(expr))   ## expr is a node name
+    if(is.name(expr) || (is.call(expr) && (expr[[1]] == '['))) return(nimDeparse(expr))   ## expr is a node name
     if(is.call(expr)) return(unlist(lapply(expr[-1], cc_getNodesInExpr)))   ## expr is some general call
-    stop(paste0('something went wrong processing: ', deparse(expr)))
+    stop(paste0('something went wrong processing: ', nimDeparse(expr)))
 }
 
 ## if targetNode is vectorized: determines if any components of targetNode appear in expr
@@ -833,7 +833,7 @@ cc_checkLinearity <- function(expr, targetNode) {
     }
     
     ## expr is exactly the targetNode
-    if(identical(targetNode, deparse(expr)))
+    if(identical(targetNode, nimDeparse(expr)))
         return(list(offset = 0, scale = 1))
     
     if(!is.call(expr))   stop('expression is not a call object')
