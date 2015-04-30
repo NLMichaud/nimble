@@ -429,7 +429,7 @@ Default value is TRUE.
         },
         
         writeModelFile = function() {
-            writeLines(paste0('model\n', paste0(nimDeparse(model), collapse='\n')), con=modelFileName)
+            writeLines(paste0('model\n', paste0(deparse(model), collapse='\n')), con=modelFileName)
         },
         
         show = function() {
@@ -437,7 +437,7 @@ Default value is TRUE.
                        'algorithms:  ', paste0(MCMCs, collapse=', '), '\n',
                        'monitors:  ', paste0(monitorNodesNIMBLE, collapse=', '), '\n',
                        'model:\n',
-                       paste0(nimDeparse(model), collapse='\n')))
+                       paste0(deparse(model), collapse='\n')))
         }
     )
 )

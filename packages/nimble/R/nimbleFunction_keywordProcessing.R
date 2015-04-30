@@ -197,7 +197,7 @@ doubleBracket_keywordInfo <- keywordInfoClass(
 			}
 			else{
 				allNDims <- determineNdimsFromNfproc(singleAccess_ArgList$model, nodeArg, nfProc)
-				if(length(unique(allNDims)) > 1) stop(paste0('Error for ', nimDeparse(code), '. Inconsistent numbers of dimensions for different instances.'))
+				if(length(unique(allNDims)) > 1) stop(paste0('Error for ', deparse(code), '. Inconsistent numbers of dimensions for different instances.'))
 				nDim <- allNDims[[1]]
 				useMap <- nDim > 0
 			}
@@ -458,7 +458,7 @@ allModelValuesVars_SetupTemplate <- setupCodeTemplateClass(
 	})	
 	
 code2Name_fromArgList <- function(argList)
-	Rname2CppName(nimDeparse(argList$code))	
+	Rname2CppName(deparse(argList$code))	
 	
 singleVarAccess_SetupTemplate <- setupCodeTemplateClass(
 	#Note to progammer: required fields of argList are 'code' (raw code to be processed), model and var
@@ -731,7 +731,7 @@ getVarAndIndices <- function(code) {
             varName <- code[[2]]
             indices <- as.list(code[-c(1,2)])
         } else {
-            stop(paste('Error:', nimDeparse(code), 'is a malformed node label.'))
+            stop(paste('Error:', deparse(code), 'is a malformed node label.'))
         }
     } else {
         varName <- code
