@@ -147,7 +147,6 @@ print: Boolean argument, specifying whether to print the ordered list of default
         
             for(i in seq_along(nodes) ) {
             	node <- nodes[i]
-                if(node == "beta_t[20]") browser()
                 discrete <- model$getNodeInfo()[[node]]$isDiscrete()
                 nodeScalarComponents <- model$expandNodeNames(node, returnScalarComponents = TRUE)
                 nodeLength <- length(nodeScalarComponents)
@@ -173,7 +172,6 @@ print: Boolean argument, specifying whether to print the ordered list of default
                 
                 ## if node passes checkConjugacy(), assign 'conjugate_dxxx' sampler
                 if(useConjugacy) {
-                    cat(date(), node, "\n")
                     conjugacyResult <- model$checkConjugacy(node)
                     if(!is.null(conjugacyResult)) {
                         addSampler(type = conjugacyResult$samplerType, control = conjugacyResult$control, print = print);     next }
