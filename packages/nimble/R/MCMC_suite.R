@@ -451,6 +451,7 @@ MCMCsuiteClass <- setRefClass(
         run_jags = function() {
             if(setSeed) set.seed(0)
             if(requireNamespace('rjags', quietly = TRUE)) {
+                rjags::load.module('msm')
                 jags_mod <- rjags::jags.model(file=modelFileName, data=constantsAndData, inits=inits, n.chains=1, quiet=FALSE)
                 timeResult <- system.time({
                                               jags_out <- rjags::coda.samples(model=jags_mod, variable.names=monitorVars, n.iter=niter, thin=thin)
